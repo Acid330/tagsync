@@ -1,6 +1,0 @@
-@tagsync_HostAddress = http://localhost:5070
-
-GET {{tagsync_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
