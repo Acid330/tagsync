@@ -9,7 +9,12 @@ namespace tagsync.Controllers;
 public class ProductsController : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetProducts([FromQuery] string category, [FromQuery] int page = 1, [FromQuery] int limit = 10)
+    public async Task<IActionResult> GetProducts(
+        [FromQuery] string category,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 10,
+        [FromQuery] string sort_by = "id",
+        [FromQuery] string sort_order = "asc")
     {
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
@@ -17,14 +22,30 @@ public class ProductsController : ControllerBase
         var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
         var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
-
         var filteredProducts = allProducts.Models
-            .Where(p => p.Category?.ToLower() == category.ToLower())
+            .Where(p => p.Category?.ToLower() == category.ToLower());
+
+        filteredProducts = sort_by.ToLower() switch
+        {
+            "title" => sort_order.ToLower() == "desc"
+                ? filteredProducts.OrderByDescending(p => p.Title)
+                : filteredProducts.OrderBy(p => p.Title),
+
+            "views" => sort_order.ToLower() == "desc"
+                ? filteredProducts.OrderByDescending(p => p.Views)
+                : filteredProducts.OrderBy(p => p.Views),
+
+            _ => sort_order.ToLower() == "desc"
+                ? filteredProducts.OrderByDescending(p => p.Id)
+                : filteredProducts.OrderBy(p => p.Id)
+        };
+
+        var pagedProducts = filteredProducts
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToList();
 
-        var result = filteredProducts.Select(p =>
+        var result = pagedProducts.Select(p =>
         {
             var characteristics = allParamsInt.Models
                 .Where(param => param.ProductId == p.Id)
@@ -36,17 +57,17 @@ public class ProductsController : ControllerBase
 
                     var dict = new Dictionary<string, object?>
                     {
-                    { "name", param.Name },
-                    { "value", value },
-                    { "translations", translations }
+                        { "name", param.Name },
+                        { "value", value },
+                        { "translations", translations }
                     };
 
                     if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
                     {
                         dict["value_translations"] = new Dictionary<string, string>
                         {
-                        { "uk", $"{value} {suffix.uk}" },
-                        { "en", $"{value} {suffix.en}" }
+                            { "uk", $"{value} {suffix.uk}" },
+                            { "en", $"{value} {suffix.en}" }
                         };
                     }
 
@@ -62,9 +83,9 @@ public class ProductsController : ControllerBase
 
                             return new Dictionary<string, object?>
                             {
-                            { "name", param.Name },
-                            { "value", param.Value },
-                            { "translations", translations }
+                                { "name", param.Name },
+                                { "value", param.Value },
+                                { "translations", translations }
                             };
                         })
                 ).ToList();
@@ -76,8 +97,7 @@ public class ProductsController : ControllerBase
 
             float? averageRating = productRatings.Count == 0
                 ? null
-                : (float)Math.Round(productRatings.Average(), 1)
-;
+                : (float)Math.Round(productRatings.Average(), 1);
 
             return new
             {
@@ -95,7 +115,6 @@ public class ProductsController : ControllerBase
 
         return Ok(result);
     }
-
 
     [HttpGet("filters")]
     public async Task<IActionResult> GetFilters([FromQuery] string category)
