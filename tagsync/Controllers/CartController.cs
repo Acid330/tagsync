@@ -112,6 +112,8 @@ public class CartController : ControllerBase
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+
 
         var cartProductList = new List<object>();
         decimal cartPrice = 0;
@@ -173,7 +175,11 @@ public class CartController : ControllerBase
             {
                 product_id = product.Id,
                 title = product.Title,
-                image_url = product.ImageUrl,
+                images = productImages.Models
+                    .Where(img => img.ProductId == product.Id)
+                    .Select(img => img.ImageUrl)
+                    .ToList(),
+
                 quantity = item.Quantity,
                 price = price,
                 all_price = allPrice,

@@ -51,7 +51,6 @@ public class ReviewController : ControllerBase
         }
         catch (Exception ex)
         {
-            // ловим всё остальное
             return StatusCode(500, new
             {
                 success = false,

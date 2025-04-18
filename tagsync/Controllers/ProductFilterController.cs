@@ -14,6 +14,7 @@ public class ProductFilterController : ControllerBase
         var queryParams = HttpContext.Request.Query;
         var filters = new Dictionary<string, HashSet<string>>();
         var rangeFilters = new Dictionary<string, List<(int from, int to)>>();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
         int page = queryParams.TryGetValue("page", out var pgVal) && int.TryParse(pgVal, out int pg) ? Math.Max(pg, 1) : 1;
         int limit = queryParams.TryGetValue("limit", out var limVal) && int.TryParse(limVal, out int lim) ? Math.Max(lim, 1) : 10;
@@ -115,55 +116,74 @@ public class ProductFilterController : ControllerBase
 
         results = results.Skip((page - 1) * limit).Take(limit);
 
-        var response = results.Select(r => new
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+
+        var response = results.Select(r =>
         {
-            product_id = r.product.Id,
-            title = r.product.Title,
-            image_url = r.product.ImageUrl,
-            price = r.price,
-            views = r.product.Views,
-            characteristics = allParamsInt.Models
-                .Where(param => param.ProductId == r.product.Id)
-                .Select(param =>
-                {
-                    var name = param.Name.ToLower();
-                    var value = param.Value.ToString();
-                    var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+            var ratings = allReviews.Models
+                .Where(rvw => rvw.ProductId == r.product.Id)
+                .Select(rvw => rvw.Rating)
+                .ToList();
 
-                    var dict = new Dictionary<string, object?>
-                    {
-                        { "name", param.Name },
-                        { "value", value },
-                        { "translations", translations }
-                    };
+            float? averageRating = ratings.Count == 0
+                ? null
+                : (float)Math.Round(ratings.Average(), 1);
 
-                    if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
+            return new
+            {
+                product_id = r.product.Id,
+                title = r.product.Title,
+                images = productImages.Models
+                .Where(img => img.ProductId == r.product.Id)
+                .Select(img => img.ImageUrl)
+                .ToList(),
+                price = r.price,
+                views = r.product.Views,
+                average_rating = averageRating,
+                characteristics = allParamsInt.Models
+                    .Where(param => param.ProductId == r.product.Id)
+                    .Select(param =>
                     {
-                        dict["value_translations"] = new Dictionary<string, string>
+                        var name = param.Name.ToLower();
+                        var value = param.Value.ToString();
+                        var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+
+                        var dict = new Dictionary<string, object?>
                         {
-                            { "uk", $"{value} {suffix.uk}" },
-                            { "en", $"{value} {suffix.en}" }
+                    { "name", param.Name },
+                    { "value", value },
+                    { "translations", translations }
                         };
-                    }
 
-                    return dict;
-                })
-                .Concat(
-                    allParams.Models
-                        .Where(param => param.ProductId == r.product.Id)
-                        .Select(param =>
+                        if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
                         {
-                            var name = param.Name.ToLower();
-                            var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
-                            return new Dictionary<string, object?>
+                            dict["value_translations"] = new Dictionary<string, string>
                             {
-                                { "name", param.Name },
-                                { "value", param.Value },
-                                { "translations", translations }
+                        { "uk", $"{value} {suffix.uk}" },
+                        { "en", $"{value} {suffix.en}" }
                             };
-                        })
-                ).ToList()
+                        }
+
+                        return dict;
+                    })
+                    .Concat(
+                        allParams.Models
+                            .Where(param => param.ProductId == r.product.Id)
+                            .Select(param =>
+                            {
+                                var name = param.Name.ToLower();
+                                var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+                                return new Dictionary<string, object?>
+                                {
+                            { "name", param.Name },
+                            { "value", param.Value },
+                            { "translations", translations }
+                                };
+                            })
+                    ).ToList()
+            };
         });
+
 
         return Ok(response);
     }

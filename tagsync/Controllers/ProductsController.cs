@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using tagsync.Helpers;
 using tagsync.Models;
 
@@ -14,6 +14,9 @@ public class ProductsController : ControllerBase
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+
 
         var filteredProducts = allProducts.Models
             .Where(p => p.Category?.ToLower() == category.ToLower())
@@ -33,17 +36,17 @@ public class ProductsController : ControllerBase
 
                     var dict = new Dictionary<string, object?>
                     {
-                        { "name", param.Name },
-                        { "value", value },
-                        { "translations", translations }
+                    { "name", param.Name },
+                    { "value", value },
+                    { "translations", translations }
                     };
 
                     if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
                     {
                         dict["value_translations"] = new Dictionary<string, string>
                         {
-                            { "uk", $"{value} {suffix.uk}" },
-                            { "en", $"{value} {suffix.en}" }
+                        { "uk", $"{value} {suffix.uk}" },
+                        { "en", $"{value} {suffix.en}" }
                         };
                     }
 
@@ -59,25 +62,40 @@ public class ProductsController : ControllerBase
 
                             return new Dictionary<string, object?>
                             {
-                                { "name", param.Name },
-                                { "value", param.Value },
-                                { "translations", translations }
+                            { "name", param.Name },
+                            { "value", param.Value },
+                            { "translations", translations }
                             };
                         })
                 ).ToList();
+
+            var productRatings = allReviews.Models
+                .Where(r => r.ProductId == p.Id)
+                .Select(r => r.Rating)
+                .ToList();
+
+            float? averageRating = productRatings.Count == 0
+                ? null
+                : (float)Math.Round(productRatings.Average(), 1)
+;
 
             return new
             {
                 product_id = p.Id,
                 title = p.Title,
-                image_url = p.ImageUrl,
+                images = productImages.Models
+                    .Where(img => img.ProductId == p.Id)
+                    .Select(img => img.ImageUrl)
+                    .ToList(),
                 price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value,
+                average_rating = averageRating,
                 characteristics
             };
         });
 
         return Ok(result);
     }
+
 
     [HttpGet("filters")]
     public async Task<IActionResult> GetFilters([FromQuery] string category)

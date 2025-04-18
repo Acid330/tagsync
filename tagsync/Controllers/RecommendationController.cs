@@ -28,8 +28,10 @@ public class RecommendationController : ControllerBase
 
 
     [HttpGet("similar/{productId}")]
+
     public async Task<IActionResult> GetSimilarProducts(int productId, int page = 1, int limit = 10)
     {
+
         var productResponse = await _supabase
             .From<Product>()
             .Filter(p => p.Id, Operator.Equals, productId)
@@ -61,6 +63,7 @@ public class RecommendationController : ControllerBase
 
         var similarityList = new List<(Product, int)>();
 
+
         foreach (var prod in otherProducts.Models)
         {
             if (prod.Id == productId)
@@ -91,6 +94,8 @@ public class RecommendationController : ControllerBase
             .Take(limit);
 
         var result = new List<RecommendedProductDto>();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+
 
         foreach (var (product, _) in pagedSimilar)
         {
@@ -101,7 +106,11 @@ public class RecommendationController : ControllerBase
                 ProductId = product.Id,
                 Title = product.Title,
                 Category = product.Category,
-                ImageUrl = product.ImageUrl,
+                images = productImages.Models
+    .Where(img => img.ProductId == product.Id)
+    .Select(img => img.ImageUrl)
+    .ToList(),
+
                 Price = price
             });
         }
@@ -145,6 +154,7 @@ public class RecommendationController : ControllerBase
 
             return param.Models.FirstOrDefault()?.Value;
         }
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
         async Task AddIfCompatible(Product other)
         {
@@ -154,7 +164,11 @@ public class RecommendationController : ControllerBase
                 ProductId = other.Id,
                 Title = other.Title,
                 Category = other.Category,
-                ImageUrl = other.ImageUrl,
+                images = productImages.Models
+    .Where(img => img.ProductId == other.Id)
+    .Select(img => img.ImageUrl)
+    .ToList(),
+
                 Price = price
             });
         }
@@ -327,6 +341,7 @@ public class RecommendationController : ControllerBase
                 .Get();
 
             var otherPrice = priceParamOther.Models.FirstOrDefault()?.Value ?? 0;
+            var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
             if (otherPrice >= minPrice && otherPrice <= maxPrice)
             {
@@ -335,7 +350,11 @@ public class RecommendationController : ControllerBase
                     ProductId = p.Id,
                     Title = p.Title,
                     Category = p.Category,
-                    ImageUrl = p.ImageUrl,
+                    images = productImages.Models
+    .Where(img => img.ProductId == p.Id)
+    .Select(img => img.ImageUrl)
+    .ToList(),
+
                     Price = otherPrice
                 });
             }
@@ -398,13 +417,17 @@ public class RecommendationController : ControllerBase
                 continue;
 
             int price = await GetProductPrice(prod.Id);
+            var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
             result.Add(new RecommendedProductDto
             {
                 ProductId = prod.Id,
                 Title = prod.Title,
                 Category = prod.Category,
-                ImageUrl = prod.ImageUrl,
+                images = productImages.Models
+                    .Where(img => img.ProductId == prod.Id)
+                    .Select(img => img.ImageUrl)
+                    .ToList(),
                 Price = price
             });
         }

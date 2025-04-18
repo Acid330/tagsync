@@ -66,6 +66,8 @@ public class ComparisonController : ControllerBase
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+
 
         var result = allProducts.Models
             .Where(p => productIds.Contains(p.Id))
@@ -118,7 +120,10 @@ public class ComparisonController : ControllerBase
                 {
                     product_id = p.Id,
                     title = p.Title,
-                    image_url = p.ImageUrl,
+                    images = productImages.Models
+                        .Where(img => img.ProductId == p.Id)
+                        .Select(img => img.ImageUrl)
+                        .ToList(),
                     price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value,
                     characteristics
                 };

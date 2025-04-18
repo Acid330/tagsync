@@ -19,7 +19,7 @@ public class ViewTrackingController : ControllerBase
         };
 
         await client.From<ViewInsertModel>().Insert(view);
-        // Обновляем views
+
         var products = await client.From<Product>().Get();
         var product = products.Models.FirstOrDefault(p => p.Id == dto.ProductId);
 
