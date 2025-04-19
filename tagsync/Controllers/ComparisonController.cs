@@ -67,7 +67,7 @@ public class ComparisonController : ControllerBase
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
         var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
-
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
 
         var result = allProducts.Models
             .Where(p => productIds.Contains(p.Id))
@@ -116,14 +116,30 @@ public class ComparisonController : ControllerBase
                             })
                     ).ToList();
 
+                var slug = p.Category?.ToLower();
+                var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
+
+                var ratings = allReviews.Models
+                    .Where(rvw => rvw.ProductId == p.Id)
+                    .Select(rvw => rvw.Rating)
+                    .ToList();
+
+                float? averageRating = ratings.Count == 0
+                    ? null
+                    : (float)Math.Round(ratings.Average(), 1);
+
                 return new
                 {
                     product_id = p.Id,
                     title = p.Title,
+                    slug = p.Category?.ToLower(),
+                    translations_slug,
+                    average_rating = averageRating,
                     images = productImages.Models
                         .Where(img => img.ProductId == p.Id)
                         .Select(img => img.ImageUrl)
                         .ToList(),
+
                     price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value,
                     characteristics
                 };

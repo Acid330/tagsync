@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using tagsync.Helpers;
 using tagsync.Models;
+using static Supabase.Postgrest.Constants;
 
 namespace tagsync.Controllers;
 
@@ -13,16 +14,50 @@ public class ReviewController : ControllerBase
     {
         try
         {
+            var client = SupabaseConnector.Client;
+
+            var orders = await client
+                .From<Order>()
+                .Filter(o => o.UserEmail, Operator.Equals, dto.UserEmail)
+                .Filter(o => o.ProductId, Operator.Equals, dto.ProductId)
+                .Get();
+
+            if (!orders.Models.Any())
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "You can only review products you have purchased."
+                });
+            }
+
+            var existingReview = await client
+                .From<ProductReview>()
+                .Filter(r => r.UserEmail, Operator.Equals, dto.UserEmail)
+                .Filter(r => r.ProductId, Operator.Equals, dto.ProductId)
+                .Get();
+
+            if (existingReview.Models.Any())
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "You have already submitted a review for this product."
+                });
+            }
+
             var review = new ProductReview
             {
                 ProductId = dto.ProductId,
                 UserEmail = dto.UserEmail,
                 Rating = dto.Rating,
                 Comment = dto.Comment,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
                 CreatedAt = DateTime.UtcNow
             };
 
-            var response = await SupabaseConnector.Client.From<ProductReview>().Insert(review);
+            var response = await client.From<ProductReview>().Insert(review);
             var inserted = response.Models.FirstOrDefault();
 
             return Ok(new
@@ -33,6 +68,8 @@ public class ReviewController : ControllerBase
                     inserted.Id,
                     inserted.ProductId,
                     inserted.UserEmail,
+                    inserted.FirstName,
+                    inserted.LastName,
                     inserted.Rating,
                     inserted.Comment,
                     inserted.CreatedAt
@@ -45,8 +82,8 @@ public class ReviewController : ControllerBase
             {
                 success = false,
                 message = ex.Message.Contains("violates foreign key constraint")
-                ? "No user with this email was found."
-                : "Error adding a review."
+                    ? "No user with this email was found."
+                    : "Error adding a review."
             });
         }
         catch (Exception ex)
@@ -58,7 +95,6 @@ public class ReviewController : ControllerBase
             });
         }
     }
-
 
 
     [HttpGet("{productId}")]
@@ -75,10 +111,11 @@ public class ReviewController : ControllerBase
             id = r.Id,
             productId = r.ProductId,
             userEmail = r.UserEmail,
+            firstName = r.FirstName,
+            lastName = r.LastName,
             rating = r.Rating,
             comment = r.Comment,
             createdAt = r.CreatedAt
         }));
-
     }
 }

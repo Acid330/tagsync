@@ -19,6 +19,7 @@ public class OrdersController : ControllerBase
 
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
         var groupedOrders = orders.Models
             .GroupBy(o => o.CreatedAt)
@@ -36,11 +37,19 @@ public class OrdersController : ControllerBase
                     {
                         product_id = order.ProductId,
                         product_title = product?.Title,
+                        images = productImages.Models
+                            .Where(img => img.ProductId == order.ProductId)
+                            .Select(img => img.ImageUrl)
+                            .ToList(),
                         quantity = order.Quantity,
                         price_per_item = price,
                         total_price = price.HasValue ? price.Value * order.Quantity : (int?)null
                     };
-                });
+                }).ToList();
+
+                var totalOrderPrice = items
+                    .Where(i => i.total_price.HasValue)
+                    .Sum(i => i.total_price.Value);
 
                 return new
                 {
@@ -49,14 +58,13 @@ public class OrdersController : ControllerBase
                     phone = first.Phone,
                     city = first.City,
                     address = first.Address,
-                    items = items.ToList()
+                    total_order_price = totalOrderPrice,
+                    items
                 };
             });
 
         return Ok(groupedOrders);
     }
-
-
 
 
     [HttpPost("checkout")]

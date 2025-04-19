@@ -10,7 +10,7 @@ public class CartController : ControllerBase
 {
     public class CartDto
     {
-        public string UserEmail { get; set; }
+        public string UserEmail { get; set;}
         public int ProductId { get; set; }
         public int Quantity { get; set; } = 1;
     }
@@ -113,7 +113,7 @@ public class CartController : ControllerBase
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
         var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
-
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
 
         var cartProductList = new List<object>();
         decimal cartPrice = 0;
@@ -171,15 +171,29 @@ public class CartController : ControllerBase
                         })
                 ).ToList();
 
+            var slug = product.Category?.ToLower();
+            var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
+
+            var ratings = allReviews.Models
+                .Where(rvw => rvw.ProductId == product.Id)
+                .Select(rvw => rvw.Rating)
+                .ToList();
+
+            float? averageRating = ratings.Count == 0
+                ? null
+                : (float)Math.Round(ratings.Average(), 1);
+
             cartProductList.Add(new
             {
                 product_id = product.Id,
                 title = product.Title,
+                slug = product.Category?.ToLower(),
+                translations_slug,
+                average_rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.ProductId == product.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
-
                 quantity = item.Quantity,
                 price = price,
                 all_price = allPrice,
@@ -187,10 +201,13 @@ public class CartController : ControllerBase
             });
         }
 
+        int totalQuantity = cartItems.Models.Sum(x => x.Quantity);
+
         return Ok(new
         {
-            items = cartProductList,
-            cart_price = cartPrice
+            cart_price = cartPrice,
+            total_quantity = totalQuantity,
+            items = cartProductList
         });
     }
 }

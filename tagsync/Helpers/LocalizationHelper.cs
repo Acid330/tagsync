@@ -65,9 +65,37 @@ public static class LocalizationHelper
     { "side_panel", new() { { "uk", "Бічна панель" }, { "en", "Side Panel" } } }
 };
 
+    public static readonly Dictionary<string, Dictionary<string, string>> CategoryTranslations = new()
+{
+    { "gpu", new() { { "uk", "Відеокарти" }, { "en", "Graphics Cards" } } },
+    { "cpu", new() { { "uk", "Процесори" }, { "en", "CPU" } } },
+    { "motherboard", new() { { "uk", "Материнські плати" }, { "en", "Motherboards" } } },
+    { "ram", new() { { "uk", "Оперативна памʼять" }, { "en", "RAM" } } },
+    { "storage", new() { { "uk", "Накопичувачі" }, { "en", "Storage" } } },
+    { "cooler", new() { { "uk", "Кулери" }, { "en", "Coolers" } } },
+    { "psu", new() { { "uk", "Блок живлення" }, { "en", "Power supply" } } },
+    { "case", new() { { "uk", "Корпуси" }, { "en", "Cases" } } }
+};
+
+    public static readonly Dictionary<string, (string uk, string en)> ValueValueTranslations = new()
+    {
+        { "Yes", ("Так", "Yes") },
+        { "No", ("Ні", "No") },
+        { "1 years", ("3 роки", "3 years") },
+        { "2 years", ("3 роки", "3 years") },
+        { "3 years", ("3 роки", "3 years") },
+        { "4 years", ("4 роки", "4 years") },
+        { "5 years", ("5 років", "5 years") },
+        { "6 years", ("6 років", "6 years") },
+        { "7 years", ("7 років", "7 years") },
+        { "8 years", ("8 років", "8 years") },
+        { "9 years", ("9 років", "9 years") },
+        { "10 years", ("10 років", "10 years") }
+    };
 
     public static readonly Dictionary<string, (string uk, string en)> ValueSuffixes = new()
     {
+        { "core_clock", ("МГц", "MHz") },
         { "base_clock", ("МГц", "MHz") },
         { "boost_clock", ("МГц", "MHz") },
         { "frequency", ("МГц", "MHz") },
@@ -85,5 +113,32 @@ public static class LocalizationHelper
         { "recommended_psu", ("Вт", "W") },
         { "price", ("₴", "UAH") }
 
+    };
+
+    public static readonly Dictionary<string, string[]> SynonymMap = new()
+    {
+        ["gpu"] = new[]{"graphics card", "video card", "gpu card", "видеокарта", "відеокарта", "видюха", "відіюха", "вiдео карта",
+        "гп", "гпу", "гпу карта", "графіка", "графическая карта", "графічна карта", "графічний адаптер"},
+        ["geforce"] = new[] { "gf", "джифорс", "джифорсе", "nvidia geforce", "джифорс", "nvidia" },
+        ["amd"] = new[]{
+        "radeon", "amd radeon", "амд", "радеон"},
+        ["cpu"] = new[]{
+        "processor", "процесор", "процессор", "цп", "цпу", "cpu chip", "central processor", "центральний процесор"},
+        ["intel"] = new[]{
+        "інтел", "интел", "intel core", "intel cpu", "intel processor"},
+        ["motherboard"] = new[]{
+        "mobo", "материнка", "материнська плата", "материнская плата", "mother board", "mothercard", "сістемна плата", "системная плата" },
+        ["ram"] = new[]{
+        "ram", "ram memory", "оперативка", "озу", "оперативна память", "оперативная память", "память"},
+        ["ssd"] = new[]{
+        "ssd", "накопитель", "жесткий диск", "жестяк", "solid state drive", "диск", "диск ssd", "накопичувач", "твердотільний диск"},
+        ["hdd"] = new[]{
+        "жесткий диск", "жесткий", "hdd", "винчестер", "жорсткий диск", "жорсткий", "хард", "hard disk", "hard drive"},
+        ["cooler"] = new[]{
+        "cooler", "вентилятор", "охлаждение", "охолодження", "кулер", "fan", "cpu fan", "процесорний кулер"},
+        ["case"] = new[]{
+        "корпус", "оболочка", "кейс", "кейc", "computer case", "системник", "системний блок", "комп'ютерний корпус"},
+        ["psu"] = new[]{
+        "блок питания", "power supply", "питание", "psu", "пс", "псу", "живлення", "живлення комп’ютера","питания"},
     };
 }

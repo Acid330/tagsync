@@ -9,12 +9,7 @@ namespace tagsync.Controllers;
 public class ProductsController : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetProducts(
-        [FromQuery] string category,
-        [FromQuery] int page = 1,
-        [FromQuery] int limit = 10,
-        [FromQuery] string sort_by = "id",
-        [FromQuery] string sort_order = "asc")
+    public async Task<IActionResult> GetProducts([FromQuery] string? category, [FromQuery] int? product_id, [FromQuery] int? page, [FromQuery] int? limit)
     {
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
@@ -23,29 +18,20 @@ public class ProductsController : ControllerBase
         var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
         var filteredProducts = allProducts.Models
-            .Where(p => p.Category?.ToLower() == category.ToLower());
-
-        filteredProducts = sort_by.ToLower() switch
-        {
-            "title" => sort_order.ToLower() == "desc"
-                ? filteredProducts.OrderByDescending(p => p.Title)
-                : filteredProducts.OrderBy(p => p.Title),
-
-            "views" => sort_order.ToLower() == "desc"
-                ? filteredProducts.OrderByDescending(p => p.Views)
-                : filteredProducts.OrderBy(p => p.Views),
-
-            _ => sort_order.ToLower() == "desc"
-                ? filteredProducts.OrderByDescending(p => p.Id)
-                : filteredProducts.OrderBy(p => p.Id)
-        };
-
-        var pagedProducts = filteredProducts
-            .Skip((page - 1) * limit)
-            .Take(limit)
+            .Where(p =>
+                (string.IsNullOrWhiteSpace(category) || p.Category?.ToLower() == category.ToLower()) &&
+                (!product_id.HasValue || p.Id == product_id.Value))
             .ToList();
 
-        var result = pagedProducts.Select(p =>
+        int totalCount = filteredProducts.Count;
+        if (page.HasValue && limit.HasValue)
+        {
+            int p = Math.Max(page.Value, 1);
+            int l = Math.Max(limit.Value, 1);
+            filteredProducts = filteredProducts.Skip((p - 1) * l).Take(l).ToList();
+        }
+
+        var result = filteredProducts.Select(p =>
         {
             var characteristics = allParamsInt.Models
                 .Where(param => param.ProductId == p.Id)
@@ -57,17 +43,17 @@ public class ProductsController : ControllerBase
 
                     var dict = new Dictionary<string, object?>
                     {
-                        { "name", param.Name },
-                        { "value", value },
-                        { "translations", translations }
+                    { "name", param.Name },
+                    { "value", value },
+                    { "translations", translations }
                     };
 
                     if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
                     {
                         dict["value_translations"] = new Dictionary<string, string>
                         {
-                            { "uk", $"{value} {suffix.uk}" },
-                            { "en", $"{value} {suffix.en}" }
+                        { "uk", $"{value} {suffix.uk}" },
+                        { "en", $"{value} {suffix.en}" }
                         };
                     }
 
@@ -83,9 +69,9 @@ public class ProductsController : ControllerBase
 
                             return new Dictionary<string, object?>
                             {
-                                { "name", param.Name },
-                                { "value", param.Value },
-                                { "translations", translations }
+                            { "name", param.Name },
+                            { "value", param.Value },
+                            { "translations", translations }
                             };
                         })
                 ).ToList();
@@ -103,6 +89,8 @@ public class ProductsController : ControllerBase
             {
                 product_id = p.Id,
                 title = p.Title,
+                slug = p.Category?.ToLower(),
+                translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(p.Category?.ToLower() ?? "", out var slugTr) ? slugTr : null,
                 images = productImages.Models
                     .Where(img => img.ProductId == p.Id)
                     .Select(img => img.ImageUrl)
@@ -113,8 +101,45 @@ public class ProductsController : ControllerBase
             };
         });
 
-        return Ok(result);
+        return Ok(new
+        {
+            count_category = allProducts.Models.Count(p => p.Category?.ToLower() == category?.ToLower()),
+            count_page = filteredProducts.Count,
+            products = result
+        });
+
     }
+
+
+
+
+    [HttpGet("category")]
+    public async Task<IActionResult> GetCategories()
+    {
+        var allProducts = await SupabaseConnector.Client.From<Product>().Get();
+
+        var categories = allProducts.Models
+            .GroupBy(p => p.Category?.ToLower())
+            .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+            .Select(g =>
+            {
+                var slug = g.Key!;
+                var count = g.Count();
+
+                var translations = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var tr) ? tr : null;
+
+                return new
+                {
+                    slug,
+                    count,
+                    translations_slug = translations
+                };
+            })
+            .ToList();
+
+        return Ok(categories);
+    }
+
 
     [HttpGet("filters")]
     public async Task<IActionResult> GetFilters([FromQuery] string category)
@@ -122,6 +147,7 @@ public class ProductsController : ControllerBase
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
+
         var productIds = allProducts.Models
             .Where(p => p.Category?.ToLower() == category.ToLower())
             .Select(p => p.Id)
@@ -130,11 +156,39 @@ public class ProductsController : ControllerBase
         var stringFilters = allParams.Models
             .Where(p => productIds.Contains(p.ProductId))
             .GroupBy(p => p.Name.ToLower())
-            .Select(g => new
+            .Select(g =>
             {
-                name = g.Key,
-                values = g.Select(x => x.Value).Distinct().ToList(),
-                translations = LocalizationHelper.ParameterTranslations.TryGetValue(g.Key, out var tr) ? tr : null
+                var name = g.Key;
+                var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+                var values = g.Select(x => x.Value).Distinct().ToList();
+
+                Dictionary<string, List<string>>? valueTranslations = null;
+
+                if (name is "dlss" or "rgb" or "ray_tracing")
+                {
+                    valueTranslations = new()
+                    {
+                        { "uk", values.Select(v => v == "Yes" ? "Так" : "Ні").ToList() },
+                        { "en", values }
+                    };
+                }
+                else if (name == "warranty")
+                {
+                    valueTranslations = new()
+                    {
+                        { "uk", values.Select(v => v.Replace(" years", " роки")).ToList() },
+                        { "en", values }
+                    };
+                }
+
+                return new
+                {
+                    name,
+                    type = "string",
+                    values,
+                    translations,
+                    value_translations = valueTranslations
+                };
             });
 
         var intFilters = allParamsInt.Models
@@ -142,35 +196,51 @@ public class ProductsController : ControllerBase
             .GroupBy(p => p.Name.ToLower())
             .Select(g =>
             {
-                var min = g.Min(x => x.Value);
-                var max = g.Max(x => x.Value);
                 var name = g.Key;
                 var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
 
-                Dictionary<string, string>? valueTranslations = null;
-                if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
+                var min = g.Min(x => x.Value);
+                var max = g.Max(x => x.Value);
+
+                var step = (int)Math.Ceiling((max - min + 1) / 5.0);
+                var values = new List<string>();
+                var ukList = new List<string>();
+                var enList = new List<string>();
+
+                for (int i = 0; i < 5; i++)
                 {
-                    valueTranslations = new Dictionary<string, string>
+                    int from = min + step * i;
+                    int to = Math.Min(from + step - 1, max);
+                    values.Add($"{from}-{to}");
+
+                    if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
                     {
-                        { "uk", $"{min}-{max} {suffix.uk}" },
-                        { "en", $"{min}-{max} {suffix.en}" }
+                        ukList.Add($"{from}-{to}{suffix.uk}");
+                        enList.Add($"{from}-{to}{suffix.en}");
+                    }
+                }
+
+                Dictionary<string, List<string>>? valueTranslations = null;
+                if (ukList.Any() && enList.Any())
+                {
+                    valueTranslations = new()
+                    {
+                        { "uk", ukList },
+                        { "en", enList }
                     };
                 }
 
                 return new
                 {
                     name,
-                    min,
-                    max,
+                    type = "int",
+                    values,
                     translations,
                     value_translations = valueTranslations
                 };
             });
 
-        return Ok(new
-        {
-            string_filters = stringFilters,
-            int_filters = intFilters
-        });
+        var allFilters = stringFilters.Cast<object>().Concat(intFilters.Cast<object>()).ToList();
+        return Ok(allFilters);
     }
 }

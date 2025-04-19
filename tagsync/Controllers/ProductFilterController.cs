@@ -14,7 +14,6 @@ public class ProductFilterController : ControllerBase
         var queryParams = HttpContext.Request.Query;
         var filters = new Dictionary<string, HashSet<string>>();
         var rangeFilters = new Dictionary<string, List<(int from, int to)>>();
-        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
         int page = queryParams.TryGetValue("page", out var pgVal) && int.TryParse(pgVal, out int pg) ? Math.Max(pg, 1) : 1;
         int limit = queryParams.TryGetValue("limit", out var limVal) && int.TryParse(limVal, out int lim) ? Math.Max(lim, 1) : 10;
@@ -47,6 +46,8 @@ public class ProductFilterController : ControllerBase
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
         var filteredProducts = allProducts.Models
             .Where(p => p.Category?.ToLower() == category)
@@ -60,7 +61,7 @@ public class ProductFilterController : ControllerBase
                 {
                     var match = productParams.Any(pp =>
                         pp.Name.Equals(filter.Key, StringComparison.OrdinalIgnoreCase) &&
-                        filter.Value.Contains(pp.Value.ToLower()));
+                        filter.Value.Any(val => pp.Value.ToLower().Contains(val)));
                     if (!match) return false;
                 }
                 return true;
@@ -98,8 +99,11 @@ public class ProductFilterController : ControllerBase
         if (rangeFilters.Count > 0)
             matchedProductIds = matchedProductIds.Intersect(numericMatchedIds).ToHashSet();
 
-        var results = filteredProducts
+        var filtered = filteredProducts
             .Where(p => matchedProductIds.Contains(p.Id))
+            .ToList();
+
+        var results = filtered
             .Select(p => new
             {
                 product = p,
@@ -114,9 +118,9 @@ public class ProductFilterController : ControllerBase
             _ => sortOrder == "desc" ? results.OrderByDescending(x => x.product.Id) : results.OrderBy(x => x.product.Id)
         };
 
-        results = results.Skip((page - 1) * limit).Take(limit);
+        int totalCount = results.Count();
 
-        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+        results = results.Skip((page - 1) * limit).Take(limit);
 
         var response = results.Select(r =>
         {
@@ -133,10 +137,12 @@ public class ProductFilterController : ControllerBase
             {
                 product_id = r.product.Id,
                 title = r.product.Title,
+                slug = r.product.Category?.ToLower(),
+                translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(r.product.Category?.ToLower() ?? "", out var slugTr) ? slugTr : null,
                 images = productImages.Models
-                .Where(img => img.ProductId == r.product.Id)
-                .Select(img => img.ImageUrl)
-                .ToList(),
+                    .Where(img => img.ProductId == r.product.Id)
+                    .Select(img => img.ImageUrl)
+                    .ToList(),
                 price = r.price,
                 views = r.product.Views,
                 average_rating = averageRating,
@@ -150,17 +156,17 @@ public class ProductFilterController : ControllerBase
 
                         var dict = new Dictionary<string, object?>
                         {
-                    { "name", param.Name },
-                    { "value", value },
-                    { "translations", translations }
+                        { "name", param.Name },
+                        { "value", value },
+                        { "translations", translations }
                         };
 
                         if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
                         {
                             dict["value_translations"] = new Dictionary<string, string>
                             {
-                        { "uk", $"{value} {suffix.uk}" },
-                        { "en", $"{value} {suffix.en}" }
+                            { "uk", $"{value} {suffix.uk}" },
+                            { "en", $"{value} {suffix.en}" }
                             };
                         }
 
@@ -175,16 +181,20 @@ public class ProductFilterController : ControllerBase
                                 var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
                                 return new Dictionary<string, object?>
                                 {
-                            { "name", param.Name },
-                            { "value", param.Value },
-                            { "translations", translations }
+                                { "name", param.Name },
+                                { "value", param.Value },
+                                { "translations", translations }
                                 };
                             })
                     ).ToList()
             };
         });
 
-
-        return Ok(response);
+        return Ok(new
+        {
+            count_category = filteredProducts.Count,
+            count_page = response.Count(),
+            products = response
+        });
     }
 }

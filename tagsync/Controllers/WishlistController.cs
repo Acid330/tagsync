@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using Microsoft.AspNetCore.Mvc;
 using tagsync.Helpers;
 using tagsync.Models;
@@ -21,6 +22,9 @@ public class WishlistController : ControllerBase
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+
 
         var result = allProducts.Models
             .Where(p => productIds.Contains(p.Id))
@@ -33,7 +37,6 @@ public class WishlistController : ControllerBase
                         var name = param.Name.ToLower();
                         var value = param.Value.ToString();
                         var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
-
                         var dict = new Dictionary<string, object?>
                         {
                             { "name", param.Name },
@@ -69,11 +72,29 @@ public class WishlistController : ControllerBase
                             })
                     ).ToList();
 
+                var slug = p.Category?.ToLower();
+                var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
+
+                var productRatings = allReviews.Models
+                    .Where(r => r.ProductId == p.Id)
+                    .Select(r => r.Rating)
+                    .ToList();
+
+                float? averageRating = productRatings.Count == 0
+                ? null
+                : (float)Math.Round(productRatings.Average(), 1);
+
                 return new
                 {
                     product_id = p.Id,
                     title = p.Title,
-                    image_url = p.ImageUrl,
+                    slug = p.Category?.ToLower(),
+                    translations_slug,
+                    images = productImages.Models
+                        .Where(img => img.ProductId == p.Id)
+                        .Select(img => img.ImageUrl)
+                        .ToList(),
+                    average_rating = averageRating,
                     price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value,
                     characteristics
                 };

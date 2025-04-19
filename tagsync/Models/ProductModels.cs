@@ -1,5 +1,7 @@
+using Newtonsoft.Json;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace tagsync.Models;
 
@@ -14,9 +16,6 @@ public class Product : BaseModel
 
     [Column("category")]
     public string Category { get; set; }
-
-    [Column("image_url")]
-    public string? ImageUrl { get; set; }
 
     [Column("views")]
     public int Views { get; set; }
@@ -72,6 +71,12 @@ public class ProductReview : BaseModel
     [Column("comment")]
     public string? Comment { get; set; }
 
+    [JsonProperty("first_name")]
+    public string? FirstName { get; set; }
+
+    [JsonProperty("last_name")]
+    public string? LastName { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 }
@@ -79,9 +84,17 @@ public class ProductReview : BaseModel
 public class AddReviewDto
 {
     public int ProductId { get; set; }
+
     public string UserEmail { get; set; }
+
+    [Range(1, 5)]
     public int Rating { get; set; }
+
     public string? Comment { get; set; }
+
+    public string? FirstName { get; set; }
+
+    public string? LastName { get; set; }
 }
 
 [Table("viewed_products")]
