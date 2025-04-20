@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+
 using tagsync.Helpers;
 using tagsync.Models;
+
 using static Supabase.Postgrest.Constants;
 
 namespace tagsync.Controllers;
@@ -28,10 +30,8 @@ public class RecommendationController : ControllerBase
 
 
     [HttpGet("similar/{productId}")]
-
     public async Task<IActionResult> GetSimilarProducts(int productId, int page = 1, int limit = 10)
     {
-
         var productResponse = await _supabase
             .From<Product>()
             .Filter(p => p.Id, Operator.Equals, productId)
@@ -62,7 +62,6 @@ public class RecommendationController : ControllerBase
             .Get();
 
         var similarityList = new List<(Product, int)>();
-
 
         foreach (var prod in otherProducts.Models)
         {
@@ -95,28 +94,38 @@ public class RecommendationController : ControllerBase
 
         var result = new List<RecommendedProductDto>();
         var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
-
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
 
         foreach (var (product, _) in pagedSimilar)
         {
             int price = await GetProductPrice(product.Id);
+
+            var productRatings = allReviews.Models
+                .Where(r => r.ProductId == product.Id)
+                .Select(r => r.Rating)
+                .ToList();
+
+            float? averageRating = productRatings.Count == 0
+                ? null
+                : (float)Math.Round(productRatings.Average(), 1);
 
             result.Add(new RecommendedProductDto
             {
                 ProductId = product.Id,
                 Title = product.Title,
                 Category = product.Category,
+                average_rating = averageRating,
                 images = productImages.Models
-    .Where(img => img.ProductId == product.Id)
-    .Select(img => img.ImageUrl)
-    .ToList(),
-
+                    .Where(img => img.ProductId == product.Id)
+                    .Select(img => img.ImageUrl)
+                    .ToList(),
                 Price = price
             });
         }
 
         return Ok(result);
     }
+
 
 
     [HttpGet("compatible/{productId}")]
@@ -155,20 +164,43 @@ public class RecommendationController : ControllerBase
             return param.Models.FirstOrDefault()?.Value;
         }
         var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+
+        var productRatings = allReviews.Models
+            .Where(r => r.ProductId == product.Id)
+            .Select(r => r.Rating)
+            .ToList();
+
+        float? averageRating = productRatings.Count == 0
+            ? null
+            : (float)Math.Round(productRatings.Average(), 1);
 
         async Task AddIfCompatible(Product other)
         {
+            if (other.Category == product.Category)
+                return;
+
             int price = await GetProductPrice(other.Id);
+
+            var productRatings = allReviews.Models
+                .Where(r => r.ProductId == other.Id)
+                .Select(r => r.Rating)
+                .ToList();
+
+            float? averageRating = productRatings.Count == 0
+                ? null
+                : (float)Math.Round(productRatings.Average(), 1);
+
             result.Add(new RecommendedProductDto
             {
                 ProductId = other.Id,
                 Title = other.Title,
                 Category = other.Category,
+                average_rating = averageRating,
                 images = productImages.Models
-    .Where(img => img.ProductId == other.Id)
-    .Select(img => img.ImageUrl)
-    .ToList(),
-
+                    .Where(img => img.ProductId == other.Id)
+                    .Select(img => img.ImageUrl)
+                    .ToList(),
                 Price = price
             });
         }
@@ -212,12 +244,24 @@ public class RecommendationController : ControllerBase
         }
         else if (product.Category == "Storage")
         {
+            async Task<List<string>> GetAllParams(int pid, string name)
+            {
+                var param = await _supabase
+                    .From<ProductParameter>()
+                    .Filter(p => p.ProductId, Operator.Equals, pid)
+                    .Filter(p => p.Name, Operator.Equals, name)
+                    .Get();
+
+                return param.Models.Select(m => m.Value).ToList();
+            }
             var iface = await GetParam(product.Id, "interface");
             var mobos = await _supabase.From<Product>().Filter(p => p.Category, Operator.Equals, "Motherboard").Get();
+
             foreach (var m in mobos.Models)
-                if ((await GetParam(m.Id, "interface")) == iface)
+                if ((await GetAllParams(m.Id, "interface")).Contains(iface))
                     await AddIfCompatible(m);
         }
+
         else if (product.Category == "GPU")
         {
             var iface = await GetParam(product.Id, "interface");
@@ -291,9 +335,9 @@ public class RecommendationController : ControllerBase
                     await AddIfCompatible(g);
         }
         var paged = result
-    .Skip((page - 1) * limit)
-    .Take(limit)
-    .ToList();
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToList();
 
         return Ok(paged);
     }
@@ -327,6 +371,9 @@ public class RecommendationController : ControllerBase
             .Filter(p => p.Category, Operator.Equals, product.Category)
             .Get();
 
+        var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+        var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+
         var result = new List<RecommendedProductDto>();
 
         foreach (var p in allProducts.Models)
@@ -341,32 +388,41 @@ public class RecommendationController : ControllerBase
                 .Get();
 
             var otherPrice = priceParamOther.Models.FirstOrDefault()?.Value ?? 0;
-            var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
 
             if (otherPrice >= minPrice && otherPrice <= maxPrice)
             {
+                var productRatings = allReviews.Models
+                    .Where(r => r.ProductId == p.Id)
+                    .Select(r => r.Rating)
+                    .ToList();
+
+                float? averageRating = productRatings.Count == 0
+                    ? null
+                    : (float)Math.Round(productRatings.Average(), 1);
+
                 result.Add(new RecommendedProductDto
                 {
                     ProductId = p.Id,
                     Title = p.Title,
                     Category = p.Category,
+                    average_rating = averageRating,
                     images = productImages.Models
-    .Where(img => img.ProductId == p.Id)
-    .Select(img => img.ImageUrl)
-    .ToList(),
-
+                        .Where(img => img.ProductId == p.Id)
+                        .Select(img => img.ImageUrl)
+                        .ToList(),
                     Price = otherPrice
                 });
             }
         }
+
         var paged = result
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToList();
 
         return Ok(paged);
-
     }
+
 
 
     [HttpGet("also-viewed/{productId}")]
@@ -412,20 +468,31 @@ public class RecommendationController : ControllerBase
                 .Filter(p => p.Id, Operator.Equals, group.ProductId)
                 .Get();
 
-            var prod = productResponse.Models.FirstOrDefault();
-            if (prod == null)
+            var product = productResponse.Models.FirstOrDefault();
+            if (product == null)
                 continue;
 
-            int price = await GetProductPrice(prod.Id);
+            int price = await GetProductPrice(product.Id);
             var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
+            var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
+
+            var productRatings = allReviews.Models
+                .Where(r => r.ProductId == product.Id)
+                .Select(r => r.Rating)
+                .ToList();
+
+            float? averageRating = productRatings.Count == 0
+                ? null
+                : (float)Math.Round(productRatings.Average(), 1);
 
             result.Add(new RecommendedProductDto
             {
-                ProductId = prod.Id,
-                Title = prod.Title,
-                Category = prod.Category,
+                ProductId = product.Id,
+                Title = product.Title,
+                Category = product.Category,
+                average_rating = averageRating,
                 images = productImages.Models
-                    .Where(img => img.ProductId == prod.Id)
+                    .Where(img => img.ProductId == product.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 Price = price
@@ -440,6 +507,130 @@ public class RecommendationController : ControllerBase
 
     }
 
+    [HttpGet("personal/{email}")]
+    public async Task<IActionResult> GetPersonalRecommendations(string email, int page = 1, int limit = 10)
+    {
+        var userViews = await _supabase
+            .From<ViewedProduct>()
+            .Filter(v => v.UserEmail, Operator.Equals, email)
+            .Get();
+
+        var viewedProductIds = userViews.Models
+            .Select(v => v.ProductId)
+            .Distinct()
+            .ToHashSet();
+
+        var allViews = await _supabase.From<ViewedProduct>().Get();
+        var productsAll = await _supabase.From<Product>().Get();
+        var allReviewsData = await _supabase.From<ProductReview>().Get();
+        var allImagesData = await _supabase.From<ProductImage>().Get();
+
+        var result = new List<RecommendedProductDto>();
+        var addedIds = new HashSet<int>();
+
+        async Task AddToResult(Product product)
+        {
+            if (addedIds.Contains(product.Id)) return;
+
+            var ratings = allReviewsData.Models
+                .Where(r => r.ProductId == product.Id)
+                .Select(r => r.Rating)
+                .ToList();
+
+            float? averageRating = ratings.Count == 0
+                ? null
+                : (float)Math.Round(ratings.Average(), 1);
+
+            var priceParam = await _supabase
+                .From<ProductParameterInt>()
+                .Filter(pp => pp.ProductId, Operator.Equals, product.Id)
+                .Filter(pp => pp.Name, Operator.Equals, "price")
+                .Get();
+
+            int price = priceParam.Models.FirstOrDefault()?.Value ?? 0;
+
+            result.Add(new RecommendedProductDto
+            {
+                ProductId = product.Id,
+                Title = product.Title,
+                Category = product.Category,
+                average_rating = averageRating,
+                Price = price,
+                images = allImagesData.Models
+                    .Where(img => img.ProductId == product.Id)
+                    .Select(img => img.ImageUrl)
+                    .ToList()
+            });
+
+            addedIds.Add(product.Id);
+        }
+
+        if (viewedProductIds.Any())
+        {
+            var similarUserEmails = allViews.Models
+                .Where(v => viewedProductIds.Contains(v.ProductId) && v.UserEmail != email)
+                .Select(v => v.UserEmail)
+                .Distinct()
+                .ToHashSet();
+
+            var candidateViews = allViews.Models
+                .Where(v => similarUserEmails.Contains(v.UserEmail) && !viewedProductIds.Contains(v.ProductId))
+                .GroupBy(v => v.ProductId)
+                .Select(g => new { ProductId = g.Key, Count = g.Count() })
+                .OrderByDescending(g => g.Count)
+                .Select(g => g.ProductId)
+                .ToList();
+
+            foreach (var pid in candidateViews)
+            {
+                if (result.Count >= limit) break;
+
+                var product = productsAll.Models.FirstOrDefault(p => p.Id == pid);
+                if (product != null)
+                    await AddToResult(product);
+            }
+        }
+
+        if (result.Count < limit)
+        {
+            var popularFallback = allViews.Models
+                .Where(v => !viewedProductIds.Contains(v.ProductId) && !addedIds.Contains(v.ProductId))
+                .GroupBy(v => v.ProductId)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .ToList();
+
+            foreach (var pid in popularFallback)
+            {
+                if (result.Count >= limit) break;
+
+                var product = productsAll.Models.FirstOrDefault(p => p.Id == pid);
+                if (product != null)
+                    await AddToResult(product);
+            }
+        }
+
+        if (result.Count < limit)
+        {
+            var randomFallback = productsAll.Models
+                .Where(p => !viewedProductIds.Contains(p.Id) && !addedIds.Contains(p.Id))
+                .OrderBy(_ => Guid.NewGuid())
+                .ToList();
+
+            foreach (var product in randomFallback)
+            {
+                if (result.Count >= limit) break;
+                await AddToResult(product);
+            }
+        }
+
+        var paged = result
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToList();
+
+        return Ok(paged);
+    }
 
 }
 

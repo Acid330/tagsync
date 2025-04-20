@@ -29,6 +29,7 @@ public class ChangePasswordRequest
 public class PasswordResetRequest
 {
     public string Email { get; set; }
+    public string? RedirectUrl { get; set; }
 }
 
 public class RegisterRequest

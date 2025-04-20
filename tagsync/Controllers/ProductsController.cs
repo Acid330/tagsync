@@ -191,54 +191,79 @@ public class ProductsController : ControllerBase
                 };
             });
 
-        var intFilters = allParamsInt.Models
+        var intFilters = new List<object>();
+
+        var intGroups = allParamsInt.Models
             .Where(p => productIds.Contains(p.ProductId))
-            .GroupBy(p => p.Name.ToLower())
-            .Select(g =>
+            .GroupBy(p => p.Name.ToLower());
+
+        foreach (var g in intGroups)
+        {
+            var name = g.Key;
+            var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+
+            var min = g.Min(x => x.Value);
+            var max = g.Max(x => x.Value);
+
+            if (name == "price")
             {
-                var name = g.Key;
-                var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+                var values = new List<string> { $"{min}-{max}" };
+                var ukList = new List<string> { $"{min}-{max}₴" };
+                var enList = new List<string> { $"{min}-{max}₴" };
 
-                var min = g.Min(x => x.Value);
-                var max = g.Max(x => x.Value);
-
-                var step = (int)Math.Ceiling((max - min + 1) / 5.0);
-                var values = new List<string>();
-                var ukList = new List<string>();
-                var enList = new List<string>();
-
-                for (int i = 0; i < 5; i++)
-                {
-                    int from = min + step * i;
-                    int to = Math.Min(from + step - 1, max);
-                    values.Add($"{from}-{to}");
-
-                    if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
-                    {
-                        ukList.Add($"{from}-{to}{suffix.uk}");
-                        enList.Add($"{from}-{to}{suffix.en}");
-                    }
-                }
-
-                Dictionary<string, List<string>>? valueTranslations = null;
-                if (ukList.Any() && enList.Any())
-                {
-                    valueTranslations = new()
-                    {
-                        { "uk", ukList },
-                        { "en", enList }
-                    };
-                }
-
-                return new
+                intFilters.Add(new
                 {
                     name,
                     type = "int",
                     values,
                     translations,
-                    value_translations = valueTranslations
-                };
+                    value_translations = new Dictionary<string, List<string>>
+            {
+                { "uk", ukList },
+                { "en", enList }
+            }
+                });
+
+                continue;
+            }
+
+            var step = (int)Math.Ceiling((max - min + 1) / 5.0);
+            var valuesRange = new List<string>();
+            var ukValues = new List<string>();
+            var enValues = new List<string>();
+
+            for (int i = 0; i < 5; i++)
+            {
+                int from = min + step * i;
+                int to = Math.Min(from + step - 1, max);
+                valuesRange.Add($"{from}-{to}");
+
+                if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
+                {
+                    ukValues.Add($"{from}-{to}{suffix.uk}");
+                    enValues.Add($"{from}-{to}{suffix.en}");
+                }
+            }
+
+            Dictionary<string, List<string>>? valueTranslations = null;
+            if (ukValues.Any() && enValues.Any())
+            {
+                valueTranslations = new()
+        {
+            { "uk", ukValues },
+            { "en", enValues }
+        };
+            }
+
+            intFilters.Add(new
+            {
+                name,
+                type = "int",
+                values = valuesRange,
+                translations,
+                value_translations = valueTranslations
             });
+        }
 
         var allFilters = stringFilters.Cast<object>().Concat(intFilters.Cast<object>()).ToList();
         return Ok(allFilters);

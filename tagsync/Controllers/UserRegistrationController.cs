@@ -152,8 +152,10 @@ namespace tagsync.Controllers
             if (string.IsNullOrWhiteSpace(request.Email))
                 return BadRequest(new { message = "Email is required" });
 
-            var redirectUrl = "http://localhost:8000/reset-success";
+            if (string.IsNullOrWhiteSpace(request.RedirectUrl))
+                return BadRequest(new { message = "Redirect URL is required" });
 
+            var redirectUrl = request.RedirectUrl;
             var url = $"{_supabaseUrl}/auth/v1/recover?redirect_to={Uri.EscapeDataString(redirectUrl)}";
 
             var payload = new { email = request.Email };
@@ -175,6 +177,7 @@ namespace tagsync.Controllers
 
             return Ok(new { message = "Password reset email sent" });
         }
+
 
 
 
