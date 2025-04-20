@@ -6,7 +6,8 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins(
                 "http://localhost:3000",
-                "https://tagsync.vercel.app"
+                "https://tagsync.vercel.app",
+                "https://tagsync-beta.vercel.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();

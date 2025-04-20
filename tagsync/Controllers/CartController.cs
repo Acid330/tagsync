@@ -195,7 +195,7 @@ public class CartController : ControllerBase
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 quantity = item.Quantity,
-                price = price,
+                price,
                 all_price = allPrice,
                 characteristics
             });

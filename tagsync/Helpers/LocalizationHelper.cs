@@ -111,7 +111,7 @@ public static class LocalizationHelper
         { "tdp", ("Вт", "W") },
         { "stream_processors", ("", "") },
         { "recommended_psu", ("Вт", "W") },
-        { "price", ("₴", "UAH") }
+        { "price", ("₴", "₴") }
 
     };
 
