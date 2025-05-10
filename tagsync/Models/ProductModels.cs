@@ -19,6 +19,7 @@ public class Product : BaseModel
 
     [Column("views")]
     public int Views { get; set; }
+    public string Slug { get; set; } = string.Empty;
 }
 
 [Table("product_parameters")]

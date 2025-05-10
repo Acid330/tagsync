@@ -8,4 +8,5 @@ public class RecommendedProductDto
     public List<string> images { get; set; }
     public int Price { get; set; }
     public float? average_rating { get; set; }
+    public string Slug { get; set; }
 }
