@@ -2,6 +2,8 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+
+using tagsync.Helpers;
 using tagsync.Models;
 
 namespace tagsync.Controllers
@@ -210,7 +212,7 @@ namespace tagsync.Controllers
         [HttpGet("getUserData")]
         public async Task<IActionResult> GetUserData([FromQuery] string email)
         {
-            var url = $"{_supabaseUrl}/rest/v1/user_data?email=eq.{email}&select=first_name,last_name,phone,city,address,email";
+            var url = $"{_supabaseUrl}/rest/v1/user_data?email=eq.{email}&select=first_name,last_name,phone,city,address,email,avatar_url";
             var response = await _httpClient.GetAsync(url);
             var content = await response.Content.ReadAsStringAsync();
 
@@ -232,7 +234,8 @@ namespace tagsync.Controllers
                 LastName = user.GetProperty("last_name").GetString(),
                 Phone = user.GetProperty("phone").GetString(),
                 City = user.GetProperty("city").GetString(),
-                Address = user.GetProperty("address").GetString()
+                Address = user.GetProperty("address").GetString(),
+                AvatarUrl = user.GetProperty("avatar_url").GetString() 
             };
 
             return Ok(result);
@@ -272,5 +275,54 @@ namespace tagsync.Controllers
             return Ok(new { exists = false });
         }
 
+        public class AvatarUploadRequest
+        {
+            public string Email { get; set; } = string.Empty;
+            public IFormFile Avatar { get; set; } = null!;
+        }
+
+        [HttpPost("uploadAvatar")]
+        public async Task<IActionResult> UploadAvatar([FromForm] AvatarUploadRequest request)
+        {
+            if (request.Avatar == null || request.Avatar.Length == 0)
+                return BadRequest(new { message = "No file uploaded" });
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Avatar.FileName)}";
+
+            byte[] fileBytes;
+            using (var ms = new MemoryStream())
+            {
+                await request.Avatar.CopyToAsync(ms);
+                fileBytes = ms.ToArray();
+            }
+
+            var uploadPath = await SupabaseConnector.Client.Storage
+                .From("avatars")
+                .Upload(fileBytes, fileName, new Supabase.Storage.FileOptions
+                {
+                    Upsert = true,
+                    ContentType = request.Avatar.ContentType
+                });
+
+            var publicUrl = SupabaseConnector.Client.Storage
+                .From("avatars")
+                .GetPublicUrl(fileName);
+
+            var patchUrl = $"{_supabaseUrl}/rest/v1/user_data?email=eq.{request.Email}";
+            var updateDict = new Dictionary<string, string> { { "avatar_url", publicUrl } };
+            var updateJson = JsonSerializer.Serialize(updateDict);
+            var content = new StringContent(updateJson, Encoding.UTF8, "application/json");
+            content.Headers.Add("Prefer", "return=representation");
+
+            var patchResponse = await _httpClient.PatchAsync(patchUrl, content);
+            var patchResult = await patchResponse.Content.ReadAsStringAsync();
+
+            if (!patchResponse.IsSuccessStatusCode)
+                return BadRequest(new { message = "DB update failed", details = patchResult });
+
+            return Ok(new { message = "Avatar uploaded successfully", avatar_url = publicUrl });
+        }
+
     }
+
 }
