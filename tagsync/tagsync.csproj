@@ -24,8 +24,4 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.7.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="wwwroot\reset-success.html" />
-  </ItemGroup>
-
 </Project>
