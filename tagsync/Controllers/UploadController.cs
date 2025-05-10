@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Supabase;
 using tagsync.Helpers;
 using tagsync.Models;
 

@@ -69,82 +69,85 @@ public class ComparisonController : ControllerBase
         var productImages = await SupabaseConnector.Client.From<ProductImage>().Get();
         var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
 
-        var result = allProducts.Models
+        var grouped = allProducts.Models
             .Where(p => productIds.Contains(p.Id))
-            .Select(p =>
-            {
-                var characteristics = allParamsInt.Models
-                    .Where(param => param.product_id == p.Id)
-                    .Select(param =>
-                    {
-                        var name = param.Name.ToLower();
-                        var value = param.Value.ToString();
-                        var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
-
-                        var dict = new Dictionary<string, object?>
+            .GroupBy(p => p.Category?.ToLower())
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(p =>
+                {
+                    var characteristics = allParamsInt.Models
+                        .Where(param => param.product_id == p.Id)
+                        .Select(param =>
                         {
+                            var name = param.Name.ToLower();
+                            var value = param.Value.ToString();
+                            var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+
+                            var dict = new Dictionary<string, object?>
+                            {
                             { "name", param.Name },
                             { "value", value },
                             { "translations", translations }
-                        };
+                            };
 
-                        if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
-                        {
-                            dict["value_translations"] = new Dictionary<string, string>
+                            if (LocalizationHelper.ValueSuffixes.TryGetValue(name, out var suffix))
                             {
+                                dict["value_translations"] = new Dictionary<string, string>
+                                {
                                 { "uk", $"{value} {suffix.uk}" },
                                 { "en", $"{value} {suffix.en}" }
-                            };
-                        }
+                                };
+                            }
 
-                        return dict;
-                    })
-                    .Concat(
-                        allParams.Models
-                            .Where(param => param.product_id == p.Id)
-                            .Select(param =>
-                            {
-                                var name = param.Name.ToLower();
-                                var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
-
-                                return new Dictionary<string, object?>
+                            return dict;
+                        })
+                        .Concat(
+                            allParams.Models
+                                .Where(param => param.product_id == p.Id)
+                                .Select(param =>
                                 {
+                                    var name = param.Name.ToLower();
+                                    var translations = LocalizationHelper.ParameterTranslations.TryGetValue(name, out var tr) ? tr : null;
+
+                                    return new Dictionary<string, object?>
+                                    {
                                     { "name", param.Name },
                                     { "value", param.Value },
                                     { "translations", translations }
-                                };
-                            })
-                    ).ToList();
+                                    };
+                                })
+                        ).ToList();
 
-                var slug = p.Category?.ToLower();
-                var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
+                    var slug = p.Category?.ToLower();
+                    var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
 
-                var ratings = allReviews.Models
-                    .Where(rvw => rvw.product_id == p.Id)
-                    .Select(rvw => rvw.average_rating)
-                    .ToList();
+                    var ratings = allReviews.Models
+                        .Where(rvw => rvw.product_id == p.Id)
+                        .Select(rvw => rvw.average_rating)
+                        .ToList();
 
-                float? averageRating = ratings.Count == 0
-                    ? null
-                    : (float)Math.Round(ratings.Average(), 1);
+                    float? averageRating = ratings.Count == 0
+                        ? null
+                        : (float)Math.Round(ratings.Average(), 1);
 
-                return new
-                {
-                    product_id = p.Id,
-                    title = p.Title,
-                    slug = p.Category?.ToLower(),
-                    translations_slug,
-                    average_rating = averageRating,
-                    images = productImages.Models
-                        .Where(img => img.product_id == p.Id)
-                        .Select(img => img.ImageUrl)
-                        .ToList(),
+                    return new
+                    {
+                        product_id = p.Id,
+                        title = p.Title,
+                        slug = slug,
+                        translations_slug,
+                        average_rating = averageRating,
+                        images = productImages.Models
+                            .Where(img => img.product_id == p.Id)
+                            .Select(img => img.ImageUrl)
+                            .ToList(),
+                        price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value,
+                        characteristics
+                    };
+                }).ToList()
+            );
 
-                    price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value,
-                    characteristics
-                };
-            });
-
-        return Ok(result);
+        return Ok(grouped);
     }
 }

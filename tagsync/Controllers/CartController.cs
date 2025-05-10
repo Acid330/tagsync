@@ -10,7 +10,7 @@ public class CartController : ControllerBase
 {
     public class CartDto
     {
-        public string UserEmail { get; set;}
+        public string UserEmail { get; set; }
         public int product_id { get; set; }
         public int Quantity { get; set; } = 1;
     }
