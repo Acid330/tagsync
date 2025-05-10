@@ -18,7 +18,7 @@ public class WishlistController : ControllerBase
             .Where(x => x.UserEmail == userEmail)
             .Get();
 
-        var productIds = wishlist.Models.Select(w => w.ProductId).ToHashSet();
+        var productIds = wishlist.Models.Select(w => w.product_id).ToHashSet();
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
@@ -31,7 +31,7 @@ public class WishlistController : ControllerBase
             .Select(p =>
             {
                 var characteristics = allParamsInt.Models
-                    .Where(param => param.ProductId == p.Id)
+                    .Where(param => param.product_id == p.Id)
                     .Select(param =>
                     {
                         var name = param.Name.ToLower();
@@ -57,7 +57,7 @@ public class WishlistController : ControllerBase
                     })
                     .Concat(
                         allParams.Models
-                            .Where(param => param.ProductId == p.Id)
+                            .Where(param => param.product_id == p.Id)
                             .Select(param =>
                             {
                                 var name = param.Name.ToLower();
@@ -76,8 +76,8 @@ public class WishlistController : ControllerBase
                 var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
 
                 var productRatings = allReviews.Models
-                    .Where(r => r.ProductId == p.Id)
-                    .Select(r => r.Rating)
+                    .Where(r => r.product_id == p.Id)
+                    .Select(r => r.average_rating)
                     .ToList();
 
                 float? averageRating = productRatings.Count == 0
@@ -91,11 +91,11 @@ public class WishlistController : ControllerBase
                     slug = p.Category?.ToLower(),
                     translations_slug,
                     images = productImages.Models
-                        .Where(img => img.ProductId == p.Id)
+                        .Where(img => img.product_id == p.Id)
                         .Select(img => img.ImageUrl)
                         .ToList(),
                     average_rating = averageRating,
-                    price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value,
+                    price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value,
                     characteristics
                 };
             });
@@ -109,7 +109,7 @@ public class WishlistController : ControllerBase
         var item = new Wishlist
         {
             UserEmail = dto.UserEmail,
-            ProductId = dto.ProductId,
+            product_id = dto.product_id,
             AddedAt = DateTime.UtcNow
         };
 
@@ -149,7 +149,7 @@ public class WishlistController : ControllerBase
         await SupabaseConnector.Client
             .From<Wishlist>()
             .Where(x => x.UserEmail == dto.UserEmail)
-            .Where(x => x.ProductId == dto.ProductId)
+            .Where(x => x.product_id == dto.product_id)
             .Delete();
 
         return Ok(new { success = true });

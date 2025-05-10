@@ -21,7 +21,7 @@ public class RecommendationController : ControllerBase
     {
         var priceParam = await _supabase
             .From<ProductParameterInt>()
-            .Filter(p => p.ProductId, Operator.Equals, productId)
+            .Filter(p => p.product_id, Operator.Equals, productId)
             .Filter(p => p.Name, Operator.Equals, "price")
             .Get();
 
@@ -43,12 +43,12 @@ public class RecommendationController : ControllerBase
 
         var strParams = await _supabase
             .From<ProductParameter>()
-            .Filter(p => p.ProductId, Operator.Equals, productId)
+            .Filter(p => p.product_id, Operator.Equals, productId)
             .Get();
 
         var intParams = await _supabase
             .From<ProductParameterInt>()
-            .Filter(p => p.ProductId, Operator.Equals, productId)
+            .Filter(p => p.product_id, Operator.Equals, productId)
             .Get();
 
         var currentParamSet = new HashSet<string>(
@@ -70,12 +70,12 @@ public class RecommendationController : ControllerBase
 
             var pParams = await _supabase
                 .From<ProductParameter>()
-                .Filter(p => p.ProductId, Operator.Equals, prod.Id)
+                .Filter(p => p.product_id, Operator.Equals, prod.Id)
                 .Get();
 
             var pIntParams = await _supabase
                 .From<ProductParameterInt>()
-                .Filter(p => p.ProductId, Operator.Equals, prod.Id)
+                .Filter(p => p.product_id, Operator.Equals, prod.Id)
                 .Get();
 
             var paramSet = new HashSet<string>(
@@ -101,8 +101,8 @@ public class RecommendationController : ControllerBase
             int price = await GetProductPrice(product.Id);
 
             var productRatings = allReviews.Models
-                .Where(r => r.ProductId == product.Id)
-                .Select(r => r.Rating)
+                .Where(r => r.product_id == product.Id)
+                .Select(r => r.average_rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -111,12 +111,12 @@ public class RecommendationController : ControllerBase
 
             result.Add(new RecommendedProductDto
             {
-                ProductId = product.Id,
+                product_id = product.Id,
                 Title = product.Title,
                 Category = product.Category,
                 average_rating = averageRating,
                 images = productImages.Models
-                    .Where(img => img.ProductId == product.Id)
+                    .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 Price = price
@@ -146,7 +146,7 @@ public class RecommendationController : ControllerBase
         {
             var param = await _supabase
                 .From<ProductParameter>()
-                .Filter(p => p.ProductId, Operator.Equals, pid)
+                .Filter(p => p.product_id, Operator.Equals, pid)
                 .Filter(p => p.Name, Operator.Equals, name)
                 .Get();
 
@@ -157,7 +157,7 @@ public class RecommendationController : ControllerBase
         {
             var param = await _supabase
                 .From<ProductParameterInt>()
-                .Filter(p => p.ProductId, Operator.Equals, pid)
+                .Filter(p => p.product_id, Operator.Equals, pid)
                 .Filter(p => p.Name, Operator.Equals, name)
                 .Get();
 
@@ -167,8 +167,8 @@ public class RecommendationController : ControllerBase
         var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
 
         var productRatings = allReviews.Models
-            .Where(r => r.ProductId == product.Id)
-            .Select(r => r.Rating)
+            .Where(r => r.product_id == product.Id)
+            .Select(r => r.average_rating)
             .ToList();
 
         float? averageRating = productRatings.Count == 0
@@ -183,8 +183,8 @@ public class RecommendationController : ControllerBase
             int price = await GetProductPrice(other.Id);
 
             var productRatings = allReviews.Models
-                .Where(r => r.ProductId == other.Id)
-                .Select(r => r.Rating)
+                .Where(r => r.product_id == other.Id)
+                .Select(r => r.average_rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -193,12 +193,12 @@ public class RecommendationController : ControllerBase
 
             result.Add(new RecommendedProductDto
             {
-                ProductId = other.Id,
+                product_id = other.Id,
                 Title = other.Title,
                 Category = other.Category,
                 average_rating = averageRating,
                 images = productImages.Models
-                    .Where(img => img.ProductId == other.Id)
+                    .Where(img => img.product_id == other.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 Price = price
@@ -248,7 +248,7 @@ public class RecommendationController : ControllerBase
             {
                 var param = await _supabase
                     .From<ProductParameter>()
-                    .Filter(p => p.ProductId, Operator.Equals, pid)
+                    .Filter(p => p.product_id, Operator.Equals, pid)
                     .Filter(p => p.Name, Operator.Equals, name)
                     .Get();
 
@@ -357,7 +357,7 @@ public class RecommendationController : ControllerBase
 
         var priceParam = await _supabase
             .From<ProductParameterInt>()
-            .Filter(p => p.ProductId, Operator.Equals, product.Id)
+            .Filter(p => p.product_id, Operator.Equals, product.Id)
             .Filter(p => p.Name, Operator.Equals, "price")
             .Get();
 
@@ -383,7 +383,7 @@ public class RecommendationController : ControllerBase
 
             var priceParamOther = await _supabase
                 .From<ProductParameterInt>()
-                .Filter(pp => pp.ProductId, Operator.Equals, p.Id)
+                .Filter(pp => pp.product_id, Operator.Equals, p.Id)
                 .Filter(pp => pp.Name, Operator.Equals, "price")
                 .Get();
 
@@ -392,8 +392,8 @@ public class RecommendationController : ControllerBase
             if (otherPrice >= minPrice && otherPrice <= maxPrice)
             {
                 var productRatings = allReviews.Models
-                    .Where(r => r.ProductId == p.Id)
-                    .Select(r => r.Rating)
+                    .Where(r => r.product_id == p.Id)
+                    .Select(r => r.average_rating)
                     .ToList();
 
                 float? averageRating = productRatings.Count == 0
@@ -402,12 +402,12 @@ public class RecommendationController : ControllerBase
 
                 result.Add(new RecommendedProductDto
                 {
-                    ProductId = p.Id,
+                    product_id = p.Id,
                     Title = p.Title,
                     Category = p.Category,
                     average_rating = averageRating,
                     images = productImages.Models
-                        .Where(img => img.ProductId == p.Id)
+                        .Where(img => img.product_id == p.Id)
                         .Select(img => img.ImageUrl)
                         .ToList(),
                     Price = otherPrice
@@ -431,7 +431,7 @@ public class RecommendationController : ControllerBase
     {
         var viewersResponse = await _supabase
             .From<ViewedProduct>()
-            .Filter(p => p.ProductId, Operator.Equals, productId)
+            .Filter(p => p.product_id, Operator.Equals, productId)
             .Get();
 
         var viewerEmails = viewersResponse.Models.Select(v => v.UserEmail).Distinct().ToList();
@@ -452,8 +452,8 @@ public class RecommendationController : ControllerBase
         }
 
         var grouped = alsoViewedRaw
-            .Where(v => v.ProductId != productId)
-            .GroupBy(v => v.ProductId)
+            .Where(v => v.product_id != productId)
+            .GroupBy(v => v.product_id)
             .Select(g => new { ProductId = g.Key, Count = g.Count() })
             .OrderByDescending(g => g.Count)
             .Take(10)
@@ -477,8 +477,8 @@ public class RecommendationController : ControllerBase
             var allReviews = await SupabaseConnector.Client.From<ProductReview>().Get();
 
             var productRatings = allReviews.Models
-                .Where(r => r.ProductId == product.Id)
-                .Select(r => r.Rating)
+                .Where(r => r.product_id == product.Id)
+                .Select(r => r.average_rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -487,12 +487,12 @@ public class RecommendationController : ControllerBase
 
             result.Add(new RecommendedProductDto
             {
-                ProductId = product.Id,
+                product_id = product.Id,
                 Title = product.Title,
                 Category = product.Category,
                 average_rating = averageRating,
                 images = productImages.Models
-                    .Where(img => img.ProductId == product.Id)
+                    .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 Price = price
@@ -516,7 +516,7 @@ public class RecommendationController : ControllerBase
             .Get();
 
         var viewedProductIds = userViews.Models
-            .Select(v => v.ProductId)
+            .Select(v => v.product_id)
             .Distinct()
             .ToHashSet();
 
@@ -533,8 +533,8 @@ public class RecommendationController : ControllerBase
             if (addedIds.Contains(product.Id)) return;
 
             var ratings = allReviewsData.Models
-                .Where(r => r.ProductId == product.Id)
-                .Select(r => r.Rating)
+                .Where(r => r.product_id == product.Id)
+                .Select(r => r.average_rating)
                 .ToList();
 
             float? averageRating = ratings.Count == 0
@@ -543,7 +543,7 @@ public class RecommendationController : ControllerBase
 
             var priceParam = await _supabase
                 .From<ProductParameterInt>()
-                .Filter(pp => pp.ProductId, Operator.Equals, product.Id)
+                .Filter(pp => pp.product_id, Operator.Equals, product.Id)
                 .Filter(pp => pp.Name, Operator.Equals, "price")
                 .Get();
 
@@ -551,13 +551,13 @@ public class RecommendationController : ControllerBase
 
             result.Add(new RecommendedProductDto
             {
-                ProductId = product.Id,
+                product_id = product.Id,
                 Title = product.Title,
                 Category = product.Category,
                 average_rating = averageRating,
                 Price = price,
                 images = allImagesData.Models
-                    .Where(img => img.ProductId == product.Id)
+                    .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
                     .ToList()
             });
@@ -568,14 +568,14 @@ public class RecommendationController : ControllerBase
         if (viewedProductIds.Any())
         {
             var similarUserEmails = allViews.Models
-                .Where(v => viewedProductIds.Contains(v.ProductId) && v.UserEmail != email)
+                .Where(v => viewedProductIds.Contains(v.product_id) && v.UserEmail != email)
                 .Select(v => v.UserEmail)
                 .Distinct()
                 .ToHashSet();
 
             var candidateViews = allViews.Models
-                .Where(v => similarUserEmails.Contains(v.UserEmail) && !viewedProductIds.Contains(v.ProductId))
-                .GroupBy(v => v.ProductId)
+                .Where(v => similarUserEmails.Contains(v.UserEmail) && !viewedProductIds.Contains(v.product_id))
+                .GroupBy(v => v.product_id)
                 .Select(g => new { ProductId = g.Key, Count = g.Count() })
                 .OrderByDescending(g => g.Count)
                 .Select(g => g.ProductId)
@@ -594,8 +594,8 @@ public class RecommendationController : ControllerBase
         if (result.Count < limit)
         {
             var popularFallback = allViews.Models
-                .Where(v => !viewedProductIds.Contains(v.ProductId) && !addedIds.Contains(v.ProductId))
-                .GroupBy(v => v.ProductId)
+                .Where(v => !viewedProductIds.Contains(v.product_id) && !addedIds.Contains(v.product_id))
+                .GroupBy(v => v.product_id)
                 .OrderByDescending(g => g.Count())
                 .Select(g => g.Key)
                 .ToList();

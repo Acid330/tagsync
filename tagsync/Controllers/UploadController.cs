@@ -54,7 +54,7 @@ public class UploadController : ControllerBase
 
             var img = new ProductImage
             {
-                ProductId = productId,
+                product_id = productId,
                 ImageUrl = publicUrl
             };
 

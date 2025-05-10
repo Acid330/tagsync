@@ -25,7 +25,7 @@ public class Order : BaseModel
     public string Address { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     [Column("quantity")]
     public int Quantity { get; set; }
@@ -40,7 +40,7 @@ public class OrderRequest
     public string Phone { get; set; }
     public string City { get; set; }
     public string Address { get; set; }
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
     public int Quantity { get; set; } 
 }
 public class OrderFromCartRequest

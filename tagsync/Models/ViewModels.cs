@@ -10,7 +10,7 @@ public class ViewInsertModel : BaseModel
     public string UserEmail { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     [Column("viewed_at")]
     public DateTime ViewedAt { get; set; }
@@ -18,5 +18,5 @@ public class ViewInsertModel : BaseModel
 public class ViewRequestDto
 {
     public string UserEmail { get; set; }
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 }

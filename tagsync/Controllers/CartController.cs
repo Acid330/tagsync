@@ -11,7 +11,7 @@ public class CartController : ControllerBase
     public class CartDto
     {
         public string UserEmail { get; set;}
-        public int ProductId { get; set; }
+        public int product_id { get; set; }
         public int Quantity { get; set; } = 1;
     }
 
@@ -23,7 +23,7 @@ public class CartController : ControllerBase
             var existing = await SupabaseConnector.Client
                 .From<ShoppingCart>()
                 .Where(x => x.UserEmail == dto.UserEmail)
-                .Where(x => x.ProductId == dto.ProductId)
+                .Where(x => x.product_id == dto.product_id)
                 .Get();
 
             if (existing.Models.Count > 0)
@@ -37,7 +37,7 @@ public class CartController : ControllerBase
                 var item = new ShoppingCart
                 {
                     UserEmail = dto.UserEmail,
-                    ProductId = dto.ProductId,
+                    product_id = dto.product_id,
                     Quantity = dto.Quantity,
                     AddedAt = DateTime.UtcNow
                 };
@@ -60,7 +60,7 @@ public class CartController : ControllerBase
         var existing = await SupabaseConnector.Client
             .From<ShoppingCart>()
             .Where(x => x.UserEmail == dto.UserEmail)
-            .Where(x => x.ProductId == dto.ProductId)
+            .Where(x => x.product_id == dto.product_id)
             .Get();
 
         if (existing.Models.Count == 0)
@@ -108,7 +108,7 @@ public class CartController : ControllerBase
             .Where(x => x.UserEmail == userEmail)
             .Get();
 
-        var productIds = cartItems.Models.Select(c => c.ProductId).ToHashSet();
+        var productIds = cartItems.Models.Select(c => c.product_id).ToHashSet();
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
@@ -120,16 +120,16 @@ public class CartController : ControllerBase
 
         foreach (var item in cartItems.Models)
         {
-            var product = allProducts.Models.FirstOrDefault(p => p.Id == item.ProductId);
+            var product = allProducts.Models.FirstOrDefault(p => p.Id == item.product_id);
             if (product == null) continue;
 
-            var priceParam = allParamsInt.Models.FirstOrDefault(p => p.ProductId == product.Id && p.Name == "price");
+            var priceParam = allParamsInt.Models.FirstOrDefault(p => p.product_id == product.Id && p.Name == "price");
             var price = priceParam?.Value ?? 0;
             var allPrice = price * item.Quantity;
             cartPrice += allPrice;
 
             var characteristics = allParamsInt.Models
-                .Where(param => param.ProductId == product.Id)
+                .Where(param => param.product_id == product.Id)
                 .Select(param =>
                 {
                     var name = param.Name.ToLower();
@@ -156,7 +156,7 @@ public class CartController : ControllerBase
                 })
                 .Concat(
                     allParams.Models
-                        .Where(param => param.ProductId == product.Id)
+                        .Where(param => param.product_id == product.Id)
                         .Select(param =>
                         {
                             var name = param.Name.ToLower();
@@ -175,8 +175,8 @@ public class CartController : ControllerBase
             var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
 
             var ratings = allReviews.Models
-                .Where(rvw => rvw.ProductId == product.Id)
-                .Select(rvw => rvw.Rating)
+                .Where(rvw => rvw.product_id == product.Id)
+                .Select(rvw => rvw.average_rating)
                 .ToList();
 
             float? averageRating = ratings.Count == 0
@@ -191,7 +191,7 @@ public class CartController : ControllerBase
                 translations_slug,
                 average_rating = averageRating,
                 images = productImages.Models
-                    .Where(img => img.ProductId == product.Id)
+                    .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 quantity = item.Quantity,

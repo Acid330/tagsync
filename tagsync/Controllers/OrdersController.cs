@@ -29,16 +29,16 @@ public class OrdersController : ControllerBase
 
                 var items = group.Select(order =>
                 {
-                    var product = allProducts.Models.FirstOrDefault(p => p.Id == order.ProductId);
-                    var priceParam = allParamsInt.Models.FirstOrDefault(p => p.ProductId == order.ProductId && p.Name.ToLower() == "price");
+                    var product = allProducts.Models.FirstOrDefault(p => p.Id == order.product_id);
+                    var priceParam = allParamsInt.Models.FirstOrDefault(p => p.product_id == order.product_id && p.Name.ToLower() == "price");
                     int? price = priceParam?.Value;
 
                     return new
                     {
-                        product_id = order.ProductId,
+                        product_id = order.product_id,
                         product_title = product?.Title,
                         images = productImages.Models
-                            .Where(img => img.ProductId == order.ProductId)
+                            .Where(img => img.product_id == order.product_id)
                             .Select(img => img.ImageUrl)
                             .ToList(),
                         quantity = order.Quantity,
@@ -89,7 +89,7 @@ public class OrdersController : ControllerBase
                 Phone = request.Phone,
                 City = request.City,
                 Address = request.Address,
-                ProductId = item.ProductId,
+                product_id = item.product_id,
                 Quantity = item.Quantity,
                 CreatedAt = DateTime.UtcNow
             });

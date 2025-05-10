@@ -28,7 +28,7 @@ public class ProductParameter : BaseModel
     public int Id { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     [Column("name")]
     public string Name { get; set; }
@@ -44,7 +44,7 @@ public class ProductParameterInt : BaseModel
     public int Id { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     [Column("name")]
     public string Name { get; set; }
@@ -60,13 +60,13 @@ public class ProductReview : BaseModel
     public int Id { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     [Column("user_email")]
     public string UserEmail { get; set; }
 
-    [Column("rating")]
-    public int Rating { get; set; }
+    [Column("average_rating")]
+    public int average_rating { get; set; }
 
     [Column("comment")]
     public string? Comment { get; set; }
@@ -83,12 +83,12 @@ public class ProductReview : BaseModel
 
 public class AddReviewDto
 {
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     public string UserEmail { get; set; }
 
     [Range(1, 5)]
-    public int Rating { get; set; }
+    public int average_rating { get; set; }
 
     public string? Comment { get; set; }
 
@@ -104,6 +104,6 @@ public class ViewedProduct : BaseModel
     public string UserEmail { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 }
 

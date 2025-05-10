@@ -13,7 +13,7 @@ public class Wishlist : BaseModel
     public string UserEmail { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     [Column("added_at")]
     public DateTime AddedAt { get; set; }
@@ -21,5 +21,5 @@ public class Wishlist : BaseModel
 public class AddToWishlistDto
 {
     public string UserEmail { get; set; }
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 }

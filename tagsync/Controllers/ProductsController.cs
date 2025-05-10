@@ -34,7 +34,7 @@ public class ProductsController : ControllerBase
         var result = filteredProducts.Select(p =>
         {
             var characteristics = allParamsInt.Models
-                .Where(param => param.ProductId == p.Id)
+                .Where(param => param.product_id == p.Id)
                 .Select(param =>
                 {
                     var name = param.Name.ToLower();
@@ -61,7 +61,7 @@ public class ProductsController : ControllerBase
                 })
                 .Concat(
                     allParams.Models
-                        .Where(param => param.ProductId == p.Id)
+                        .Where(param => param.product_id == p.Id)
                         .Select(param =>
                         {
                             var name = param.Name.ToLower();
@@ -77,8 +77,8 @@ public class ProductsController : ControllerBase
                 ).ToList();
 
             var productRatings = allReviews.Models
-                .Where(r => r.ProductId == p.Id)
-                .Select(r => r.Rating)
+                .Where(r => r.product_id == p.Id)
+                .Select(r => r.average_rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -92,10 +92,10 @@ public class ProductsController : ControllerBase
                 slug = p.Category?.ToLower(),
                 translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(p.Category?.ToLower() ?? "", out var slugTr) ? slugTr : null,
                 images = productImages.Models
-                    .Where(img => img.ProductId == p.Id)
+                    .Where(img => img.product_id == p.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
-                price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value,
+                price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value,
                 average_rating = averageRating,
                 characteristics
             };
@@ -154,7 +154,7 @@ public class ProductsController : ControllerBase
             .ToHashSet();
 
         var stringFilters = allParams.Models
-            .Where(p => productIds.Contains(p.ProductId))
+            .Where(p => productIds.Contains(p.product_id))
             .GroupBy(p => p.Name.ToLower())
             .Select(g =>
             {
@@ -194,7 +194,7 @@ public class ProductsController : ControllerBase
         var intFilters = new List<object>();
 
         var intGroups = allParamsInt.Models
-            .Where(p => productIds.Contains(p.ProductId))
+            .Where(p => productIds.Contains(p.product_id))
             .GroupBy(p => p.Name.ToLower());
 
         foreach (var g in intGroups)

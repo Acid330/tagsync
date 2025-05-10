@@ -19,7 +19,7 @@ public class ReviewController : ControllerBase
             var orders = await client
                 .From<Order>()
                 .Filter(o => o.UserEmail, Operator.Equals, dto.UserEmail)
-                .Filter(o => o.ProductId, Operator.Equals, dto.ProductId)
+                .Filter(o => o.product_id, Operator.Equals, dto.product_id)
                 .Get();
 
             if (!orders.Models.Any())
@@ -34,7 +34,7 @@ public class ReviewController : ControllerBase
             var existingReview = await client
                 .From<ProductReview>()
                 .Filter(r => r.UserEmail, Operator.Equals, dto.UserEmail)
-                .Filter(r => r.ProductId, Operator.Equals, dto.ProductId)
+                .Filter(r => r.product_id, Operator.Equals, dto.product_id)
                 .Get();
 
             if (existingReview.Models.Any())
@@ -48,9 +48,9 @@ public class ReviewController : ControllerBase
 
             var review = new ProductReview
             {
-                ProductId = dto.ProductId,
+                product_id = dto.product_id,
                 UserEmail = dto.UserEmail,
-                Rating = dto.Rating,
+                average_rating = dto.average_rating,
                 Comment = dto.Comment,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
@@ -66,11 +66,11 @@ public class ReviewController : ControllerBase
                 review = new
                 {
                     inserted.Id,
-                    inserted.ProductId,
+                    inserted.product_id,
                     inserted.UserEmail,
                     inserted.FirstName,
                     inserted.LastName,
-                    inserted.Rating,
+                    inserted.average_rating,
                     inserted.Comment,
                     inserted.CreatedAt
                 }
@@ -102,18 +102,18 @@ public class ReviewController : ControllerBase
     {
         var reviews = await SupabaseConnector.Client
             .From<ProductReview>()
-            .Where(r => r.ProductId == productId)
+            .Where(r => r.product_id == productId)
             .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
             .Get();
 
         return Ok(reviews.Models.Select(r => new
         {
             id = r.Id,
-            productId = r.ProductId,
+            r.product_id,
             userEmail = r.UserEmail,
             firstName = r.FirstName,
             lastName = r.LastName,
-            rating = r.Rating,
+            rating = r.average_rating,
             comment = r.Comment,
             createdAt = r.CreatedAt
         }));

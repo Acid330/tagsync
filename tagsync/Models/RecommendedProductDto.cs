@@ -2,7 +2,7 @@
 
 public class RecommendedProductDto
 {
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
     public string Title { get; set; }
     public string Category { get; set; }
     public List<string> images { get; set; }

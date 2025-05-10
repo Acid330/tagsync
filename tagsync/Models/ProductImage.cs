@@ -10,7 +10,7 @@ namespace tagsync.Models
         public long Id { get; set; }
 
         [Column("product_id")]
-        public long ProductId { get; set; }
+        public long product_id { get; set; }
 
         [Column("image_url")]
         public string ImageUrl { get; set; }

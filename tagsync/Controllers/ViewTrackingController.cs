@@ -14,14 +14,14 @@ public class ViewTrackingController : ControllerBase
         var view = new ViewInsertModel
         {
             UserEmail = dto.UserEmail,
-            ProductId = dto.ProductId,
+            product_id = dto.product_id,
             ViewedAt = DateTime.UtcNow
         };
 
         await client.From<ViewInsertModel>().Insert(view);
 
         var products = await client.From<Product>().Get();
-        var product = products.Models.FirstOrDefault(p => p.Id == dto.ProductId);
+        var product = products.Models.FirstOrDefault(p => p.Id == dto.product_id);
 
         if (product != null)
         {

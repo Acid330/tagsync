@@ -47,8 +47,8 @@ public class SearchController : ControllerBase
 
         var results = matchedProducts.Select(p =>
         {
-            var price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value;
-            var ratings = allReviews.Models.Where(r => r.ProductId == p.Id).Select(r => r.Rating).ToList();
+            var price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value;
+            var ratings = allReviews.Models.Where(r => r.product_id == p.Id).Select(r => r.average_rating).ToList();
             float? averageRating = ratings.Count == 0 ? null : (float)Math.Round(ratings.Average(), 1);
 
             return new
@@ -58,7 +58,7 @@ public class SearchController : ControllerBase
                 slug = p.Category?.ToLower(),
                 translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(p.Category?.ToLower() ?? "", out var tr) ? tr : null,
                 images = productImages.Models
-                    .Where(img => img.ProductId == p.Id)
+                    .Where(img => img.product_id == p.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 price,

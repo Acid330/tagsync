@@ -56,7 +56,7 @@ public class ProductFilterController : ControllerBase
         var matchedProductIds = filteredProducts
             .Where(p =>
             {
-                var productParams = allParams.Models.Where(m => m.ProductId == p.Id).ToList();
+                var productParams = allParams.Models.Where(m => m.product_id == p.Id).ToList();
                 foreach (var filter in filters)
                 {
                     var match = productParams.Any(pp =>
@@ -77,7 +77,7 @@ public class ProductFilterController : ControllerBase
 
             foreach (var rangeFilter in rangeFilters)
             {
-                var param = allParamsInt.Models.FirstOrDefault(p => p.ProductId == id && p.Name.ToLower() == rangeFilter.Key);
+                var param = allParamsInt.Models.FirstOrDefault(p => p.product_id == id && p.Name.ToLower() == rangeFilter.Key);
                 if (param == null || !int.TryParse(param.Value.ToString(), out int val))
                 {
                     include = false;
@@ -107,7 +107,7 @@ public class ProductFilterController : ControllerBase
             .Select(p => new
             {
                 product = p,
-                price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value
+                price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value
             });
 
         results = sortBy switch
@@ -125,8 +125,8 @@ public class ProductFilterController : ControllerBase
         var response = results.Select(r =>
         {
             var ratings = allReviews.Models
-                .Where(rvw => rvw.ProductId == r.product.Id)
-                .Select(rvw => rvw.Rating)
+                .Where(rvw => rvw.product_id == r.product.Id)
+                .Select(rvw => rvw.average_rating)
                 .ToList();
 
             float? averageRating = ratings.Count == 0
@@ -140,14 +140,14 @@ public class ProductFilterController : ControllerBase
                 slug = r.product.Category?.ToLower(),
                 translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(r.product.Category?.ToLower() ?? "", out var slugTr) ? slugTr : null,
                 images = productImages.Models
-                    .Where(img => img.ProductId == r.product.Id)
+                    .Where(img => img.product_id == r.product.Id)
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 price = r.price,
                 views = r.product.Views,
                 average_rating = averageRating,
                 characteristics = allParamsInt.Models
-                    .Where(param => param.ProductId == r.product.Id)
+                    .Where(param => param.product_id == r.product.Id)
                     .Select(param =>
                     {
                         var name = param.Name.ToLower();
@@ -174,7 +174,7 @@ public class ProductFilterController : ControllerBase
                     })
                     .Concat(
                         allParams.Models
-                            .Where(param => param.ProductId == r.product.Id)
+                            .Where(param => param.product_id == r.product.Id)
                             .Select(param =>
                             {
                                 var name = param.Name.ToLower();

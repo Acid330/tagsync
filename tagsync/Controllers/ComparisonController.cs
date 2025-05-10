@@ -13,7 +13,7 @@ public class ComparisonController : ControllerBase
     public class ComparisonDto
     {
         public string UserEmail { get; set; }
-        public int ProductId { get; set; }
+        public int product_id { get; set; }
     }
 
     [HttpPost("add")]
@@ -22,7 +22,7 @@ public class ComparisonController : ControllerBase
         var item = new Comparison
         {
             UserEmail = dto.UserEmail,
-            ProductId = dto.ProductId,
+            product_id = dto.product_id,
             AddedAt = DateTime.UtcNow
         };
 
@@ -48,7 +48,7 @@ public class ComparisonController : ControllerBase
         await SupabaseConnector.Client
             .From<Comparison>()
             .Where(x => x.UserEmail == dto.UserEmail)
-            .Where(x => x.ProductId == dto.ProductId)
+            .Where(x => x.product_id == dto.product_id)
             .Delete();
 
         return Ok(new { success = true });
@@ -62,7 +62,7 @@ public class ComparisonController : ControllerBase
             .Where(x => x.UserEmail == userEmail)
             .Get();
 
-        var productIds = comparison.Models.Select(w => w.ProductId).ToHashSet();
+        var productIds = comparison.Models.Select(w => w.product_id).ToHashSet();
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
         var allParams = await SupabaseConnector.Client.From<ProductParameter>().Get();
         var allParamsInt = await SupabaseConnector.Client.From<ProductParameterInt>().Get();
@@ -74,7 +74,7 @@ public class ComparisonController : ControllerBase
             .Select(p =>
             {
                 var characteristics = allParamsInt.Models
-                    .Where(param => param.ProductId == p.Id)
+                    .Where(param => param.product_id == p.Id)
                     .Select(param =>
                     {
                         var name = param.Name.ToLower();
@@ -101,7 +101,7 @@ public class ComparisonController : ControllerBase
                     })
                     .Concat(
                         allParams.Models
-                            .Where(param => param.ProductId == p.Id)
+                            .Where(param => param.product_id == p.Id)
                             .Select(param =>
                             {
                                 var name = param.Name.ToLower();
@@ -120,8 +120,8 @@ public class ComparisonController : ControllerBase
                 var translations_slug = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var trCat) ? trCat : null;
 
                 var ratings = allReviews.Models
-                    .Where(rvw => rvw.ProductId == p.Id)
-                    .Select(rvw => rvw.Rating)
+                    .Where(rvw => rvw.product_id == p.Id)
+                    .Select(rvw => rvw.average_rating)
                     .ToList();
 
                 float? averageRating = ratings.Count == 0
@@ -136,11 +136,11 @@ public class ComparisonController : ControllerBase
                     translations_slug,
                     average_rating = averageRating,
                     images = productImages.Models
-                        .Where(img => img.ProductId == p.Id)
+                        .Where(img => img.product_id == p.Id)
                         .Select(img => img.ImageUrl)
                         .ToList(),
 
-                    price = allParamsInt.Models.FirstOrDefault(x => x.ProductId == p.Id && x.Name == "price")?.Value,
+                    price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value,
                     characteristics
                 };
             });

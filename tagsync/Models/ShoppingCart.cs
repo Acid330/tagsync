@@ -13,7 +13,7 @@ public class ShoppingCart : BaseModel
     public string UserEmail { get; set; }
 
     [Column("product_id")]
-    public int ProductId { get; set; }
+    public int product_id { get; set; }
 
     [Column("quantity")]
     public int Quantity { get; set; }
