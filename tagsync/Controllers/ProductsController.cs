@@ -118,6 +118,18 @@ public class ProductsController : ControllerBase
     {
         var allProducts = await SupabaseConnector.Client.From<Product>().Get();
 
+        var categoryImages = new Dictionary<string, string>
+        {
+            { "cpu", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/cpu.svg" },
+            { "storage", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/storage.svg" },
+            { "gpu", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/gpu.svg" },
+            { "motherboard", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/motherboard.svg" },
+            { "ram", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/ram.svg" },
+            { "cooler", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/cooler.svg" },
+            { "case", "" },
+            { "psu", "" },
+        };
+
         var categories = allProducts.Models
             .GroupBy(p => p.Category?.ToLower())
             .Where(g => !string.IsNullOrWhiteSpace(g.Key))
@@ -127,12 +139,15 @@ public class ProductsController : ControllerBase
                 var count = g.Count();
 
                 var translations = LocalizationHelper.CategoryTranslations.TryGetValue(slug, out var tr) ? tr : null;
+                var image = categoryImages.TryGetValue(slug, out var img) ? img : null;
 
                 return new
                 {
                     slug,
+                    img = image,
                     count,
                     translations_slug = translations
+
                 };
             })
             .ToList();
