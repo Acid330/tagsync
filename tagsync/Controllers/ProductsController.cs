@@ -126,8 +126,8 @@ public class ProductsController : ControllerBase
             { "motherboard", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/motherboard.svg" },
             { "ram", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/ram.svg" },
             { "cooler", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/cooler.svg" },
-            { "case", "" },
-            { "psu", "" },
+            { "case", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/case.svg" },
+            { "psu", "https://xavaoddkhecbwpgljrzu.supabase.co/storage/v1/object/public/images/category/power-supply.svg1" },
         };
 
         var categories = allProducts.Models
