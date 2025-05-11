@@ -113,7 +113,7 @@ public class RecommendationController : ControllerBase
             {
                 product_id = product.Id,
                 Title = product.Title,
-                Slug = product.Category,
+                Slug = product.Category.ToLower(),
                 Category = product.Category,
                 average_rating = averageRating,
                 images = productImages.Models
@@ -197,7 +197,7 @@ public class RecommendationController : ControllerBase
                 product_id = other.Id,
                 Title = other.Title,
                 Category = other.Category,
-                Slug = product.Category,
+                Slug = product.Category.ToLower(),
                 average_rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == other.Id)
@@ -407,7 +407,7 @@ public class RecommendationController : ControllerBase
                     product_id = p.Id,
                     Title = p.Title,
                     Category = p.Category,
-                    Slug = product.Category,
+                    Slug = product.Category.ToLower(),
                     average_rating = averageRating,
                     images = productImages.Models
                         .Where(img => img.product_id == p.Id)
@@ -493,7 +493,7 @@ public class RecommendationController : ControllerBase
                 product_id = product.Id,
                 Title = product.Title,
                 Category = product.Category,
-                Slug = product.Category,
+                Slug = product.Category.ToLower(),
                 average_rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == product.Id)
@@ -558,7 +558,7 @@ public class RecommendationController : ControllerBase
                 product_id = product.Id,
                 Title = product.Title,
                 Category = product.Category,
-                Slug = product.Category,
+                Slug = product.Category.ToLower(),
                 average_rating = averageRating,
                 Price = price,
                 images = allImagesData.Models
