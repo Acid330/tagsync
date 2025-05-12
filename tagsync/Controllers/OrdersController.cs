@@ -37,7 +37,7 @@ public class OrdersController : ControllerBase
                     {
                         product_id = order.product_id,
                         product_title = product?.Title,
-                        Slug = product.Category,
+                        Slug = product.Category.ToLower(),
                         images = productImages.Models
                             .Where(img => img.product_id == order.product_id)
                             .Select(img => img.ImageUrl)
