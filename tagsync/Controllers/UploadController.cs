@@ -19,7 +19,7 @@ public class UploadController : ControllerBase
     public async Task<IActionResult> UploadProductImages([FromForm] int productId, [FromForm] List<IFormFile> image)
     {
         if (image == null || image.Count == 0)
-            return BadRequest("Не переданы изображения.");
+            return BadRequest("No images have been transferred");
 
         var uploadedUrls = new List<string>();
 
@@ -42,7 +42,7 @@ public class UploadController : ControllerBase
                 });
 
             if (string.IsNullOrEmpty(uploadedPath))
-                return StatusCode(500, "Ошибка загрузки файла.");
+                return StatusCode(500, "File upload error");
 
             var publicUrl = _supabaseClient.Storage
                 .From("images")
@@ -62,7 +62,7 @@ public class UploadController : ControllerBase
 
         return Ok(new
         {
-            message = "Файлы успешно загружены",
+            message = "Files successfully uploaded",
             urls = uploadedUrls
         });
     }
