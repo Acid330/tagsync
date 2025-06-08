@@ -176,7 +176,7 @@ public class CartController : ControllerBase
 
             var ratings = allReviews.Models
                 .Where(rvw => rvw.product_id == product.Id)
-                .Select(rvw => rvw.average_rating)
+                .Select(rvw => rvw.rating)
                 .ToList();
 
             float? averageRating = ratings.Count == 0
@@ -190,7 +190,7 @@ public class CartController : ControllerBase
                 title = product.Title,
                 slug = product.Category?.ToLower(),
                 translations_slug,
-                average_rating = averageRating,
+                rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)

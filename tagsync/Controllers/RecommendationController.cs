@@ -102,7 +102,7 @@ public class RecommendationController : ControllerBase
 
             var productRatings = allReviews.Models
                 .Where(r => r.product_id == product.Id)
-                .Select(r => r.average_rating)
+                .Select(r => r.rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -115,7 +115,7 @@ public class RecommendationController : ControllerBase
                 Title = product.Title,
                 Slug = product.Category.ToLower(),
                 Category = product.Category,
-                average_rating = averageRating,
+                rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
@@ -169,7 +169,7 @@ public class RecommendationController : ControllerBase
 
         var productRatings = allReviews.Models
             .Where(r => r.product_id == product.Id)
-            .Select(r => r.average_rating)
+            .Select(r => r.rating)
             .ToList();
 
         float? averageRating = productRatings.Count == 0
@@ -185,7 +185,7 @@ public class RecommendationController : ControllerBase
 
             var productRatings = allReviews.Models
                 .Where(r => r.product_id == other.Id)
-                .Select(r => r.average_rating)
+                .Select(r => r.rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -198,7 +198,7 @@ public class RecommendationController : ControllerBase
                 Title = other.Title,
                 Category = other.Category,
                 Slug = product.Category.ToLower(),
-                average_rating = averageRating,
+                rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == other.Id)
                     .Select(img => img.ImageUrl)
@@ -395,7 +395,7 @@ public class RecommendationController : ControllerBase
             {
                 var productRatings = allReviews.Models
                     .Where(r => r.product_id == p.Id)
-                    .Select(r => r.average_rating)
+                    .Select(r => r.rating)
                     .ToList();
 
                 float? averageRating = productRatings.Count == 0
@@ -408,7 +408,7 @@ public class RecommendationController : ControllerBase
                     Title = p.Title,
                     Category = p.Category,
                     Slug = product.Category.ToLower(),
-                    average_rating = averageRating,
+                    rating = averageRating,
                     images = productImages.Models
                         .Where(img => img.product_id == p.Id)
                         .Select(img => img.ImageUrl)
@@ -481,7 +481,7 @@ public class RecommendationController : ControllerBase
 
             var productRatings = allReviews.Models
                 .Where(r => r.product_id == product.Id)
-                .Select(r => r.average_rating)
+                .Select(r => r.rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -494,7 +494,7 @@ public class RecommendationController : ControllerBase
                 Title = product.Title,
                 Category = product.Category,
                 Slug = product.Category.ToLower(),
-                average_rating = averageRating,
+                rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
@@ -538,7 +538,7 @@ public class RecommendationController : ControllerBase
 
             var ratings = allReviewsData.Models
                 .Where(r => r.product_id == product.Id)
-                .Select(r => r.average_rating)
+                .Select(r => r.rating)
                 .ToList();
 
             float? averageRating = ratings.Count == 0
@@ -559,7 +559,7 @@ public class RecommendationController : ControllerBase
                 Title = product.Title,
                 Category = product.Category,
                 Slug = product.Category.ToLower(),
-                average_rating = averageRating,
+                rating = averageRating,
                 Price = price,
                 images = allImagesData.Models
                     .Where(img => img.product_id == product.Id)

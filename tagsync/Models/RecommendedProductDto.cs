@@ -7,7 +7,7 @@ public class RecommendedProductDto
     public string Category { get; set; }
     public List<string> images { get; set; }
     public int Price { get; set; }
-    public float? average_rating { get; set; }
+    public float? rating { get; set; }
     public string Slug { get; set; }
     public int Views { get; set; }
 }

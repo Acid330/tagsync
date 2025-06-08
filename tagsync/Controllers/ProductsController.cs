@@ -78,7 +78,7 @@ public class ProductsController : ControllerBase
 
             var productRatings = allReviews.Models
                 .Where(r => r.product_id == p.Id)
-                .Select(r => r.average_rating)
+                .Select(r => r.rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -96,7 +96,7 @@ public class ProductsController : ControllerBase
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value,
-                average_rating = averageRating,
+                rating = averageRating,
                 characteristics
             };
         });

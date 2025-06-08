@@ -66,9 +66,6 @@ public class ProductReview : BaseModel
     [Column("user_email")]
     public string UserEmail { get; set; }
 
-    [Column("average_rating")]
-    public int average_rating { get; set; }
-
     [Column("comment")]
     public string? Comment { get; set; }
 
@@ -92,7 +89,7 @@ public class AddReviewDto
     public string UserEmail { get; set; }
 
     [Range(1, 5)]
-    public int average_rating { get; set; }
+    public int rating { get; set; }
 
     public string? Comment { get; set; }
 

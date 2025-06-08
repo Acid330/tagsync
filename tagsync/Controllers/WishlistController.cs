@@ -76,7 +76,7 @@ public class WishlistController : ControllerBase
 
                 var productRatings = allReviews.Models
                     .Where(r => r.product_id == p.Id)
-                    .Select(r => r.average_rating)
+                    .Select(r => r.rating)
                     .ToList();
 
                 float? averageRating = productRatings.Count == 0
@@ -93,7 +93,7 @@ public class WishlistController : ControllerBase
                         .Where(img => img.product_id == p.Id)
                         .Select(img => img.ImageUrl)
                         .ToList(),
-                    average_rating = averageRating,
+                    rating = averageRating,
                     price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value,
                     characteristics
                 };

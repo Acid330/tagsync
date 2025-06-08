@@ -35,7 +35,7 @@ public class MainPageRecommendationsController : ControllerBase
 
             var productRatings = allReviews.Models
                 .Where(r => r.product_id == product.Id)
-                .Select(r => r.average_rating)
+                .Select(r => r.rating)
                 .ToList();
 
             float? averageRating = productRatings.Count == 0
@@ -48,7 +48,7 @@ public class MainPageRecommendationsController : ControllerBase
                 Title = product.Title,
                 Slug = product.Category.ToLower(),
                 Category = product.Category,
-                average_rating = averageRating,
+                rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
@@ -113,7 +113,7 @@ public class MainPageRecommendationsController : ControllerBase
                 Title = product.Title,
                 Slug = product.Category.ToLower(),
                 Category = product.Category,
-                average_rating = averageRating,
+                rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)
@@ -175,7 +175,7 @@ public class MainPageRecommendationsController : ControllerBase
                 Title = product.Title,
                 Slug = product.Category.ToLower(),
                 Category = product.Category,
-                average_rating = averageRating,
+                rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == product.Id)
                     .Select(img => img.ImageUrl)

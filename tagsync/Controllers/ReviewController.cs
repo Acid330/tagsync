@@ -50,7 +50,7 @@ public class ReviewController : ControllerBase
             {
                 product_id = dto.product_id,
                 UserEmail = dto.UserEmail,
-                average_rating = dto.average_rating,
+                rating = dto.rating,
                 Comment = dto.Comment,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
@@ -70,7 +70,7 @@ public class ReviewController : ControllerBase
                     inserted.UserEmail,
                     inserted.FirstName,
                     inserted.LastName,
-                    inserted.average_rating,
+                    inserted.rating,
                     inserted.Comment,
                     inserted.CreatedAt
                 }
@@ -113,7 +113,7 @@ public class ReviewController : ControllerBase
             userEmail = r.UserEmail,
             firstName = r.FirstName,
             lastName = r.LastName,
-            rating = r.average_rating,
+            r.rating,
             comment = r.Comment,
             createdAt = r.CreatedAt
         }));

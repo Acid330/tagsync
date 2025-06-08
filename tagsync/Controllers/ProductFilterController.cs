@@ -126,7 +126,7 @@ public class ProductFilterController : ControllerBase
         {
             var ratings = allReviews.Models
                 .Where(rvw => rvw.product_id == r.product.Id)
-                .Select(rvw => rvw.average_rating)
+                .Select(rvw => rvw.rating)
                 .ToList();
 
             float? averageRating = ratings.Count == 0
@@ -145,7 +145,7 @@ public class ProductFilterController : ControllerBase
                     .ToList(),
                 price = r.price,
                 views = r.product.Views,
-                average_rating = averageRating,
+                rating = averageRating,
                 characteristics = allParamsInt.Models
                     .Where(param => param.product_id == r.product.Id)
                     .Select(param =>

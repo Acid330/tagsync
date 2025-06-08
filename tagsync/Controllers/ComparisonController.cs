@@ -122,7 +122,7 @@ public class ComparisonController : ControllerBase
 
                     var ratings = allReviews.Models
                         .Where(rvw => rvw.product_id == p.Id)
-                        .Select(rvw => rvw.average_rating)
+                        .Select(rvw => rvw.rating)
                         .ToList();
 
                     float? averageRating = ratings.Count == 0
@@ -135,7 +135,7 @@ public class ComparisonController : ControllerBase
                         title = p.Title,
                         slug = slug,
                         translations_slug,
-                        average_rating = averageRating,
+                        rating = averageRating,
                         images = productImages.Models
                             .Where(img => img.product_id == p.Id)
                             .Select(img => img.ImageUrl)

@@ -48,7 +48,7 @@ public class SearchController : ControllerBase
         var results = matchedProducts.Select(p =>
         {
             var price = allParamsInt.Models.FirstOrDefault(x => x.product_id == p.Id && x.Name == "price")?.Value;
-            var ratings = allReviews.Models.Where(r => r.product_id == p.Id).Select(r => r.average_rating).ToList();
+            var ratings = allReviews.Models.Where(r => r.product_id == p.Id).Select(r => r.rating).ToList();
             float? averageRating = ratings.Count == 0 ? null : (float)Math.Round(ratings.Average(), 1);
 
             return new
@@ -62,7 +62,7 @@ public class SearchController : ControllerBase
                     .Select(img => img.ImageUrl)
                     .ToList(),
                 price,
-                average_rating = averageRating
+                rating = averageRating
             };
         });
 
