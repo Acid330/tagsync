@@ -9,4 +9,5 @@ public class RecommendedProductDto
     public int Price { get; set; }
     public float? average_rating { get; set; }
     public string Slug { get; set; }
+    public int Views { get; set; }
 }

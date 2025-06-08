@@ -109,5 +109,8 @@ public class ViewedProduct : BaseModel
 
     [Column("product_id")]
     public int product_id { get; set; }
+
+    [Column("viewed_at")]
+    public DateTime ViewedAt { get; set; }
 }
 
