@@ -185,6 +185,7 @@ public class CartController : ControllerBase
 
             cartProductList.Add(new
             {
+                added_at = item.AddedAt,
                 product_id = product.Id,
                 title = product.Title,
                 slug = product.Category?.ToLower(),

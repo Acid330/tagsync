@@ -78,6 +78,9 @@ public class ProductReview : BaseModel
     [JsonProperty("last_name")]
     public string? LastName { get; set; }
 
+    [Column("rating")]
+    public int rating { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 }

@@ -196,5 +196,5 @@ public class ProductFilterController : ControllerBase
             count_page = response.Count(),
             products = response
         });
+        }
     }
-}

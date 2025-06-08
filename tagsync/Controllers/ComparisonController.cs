@@ -8,8 +8,6 @@ namespace tagsync.Controllers;
 [Route("api/[controller]")]
 public class ComparisonController : ControllerBase
 {
-
-
     public class ComparisonDto
     {
         public string UserEmail { get; set; }
@@ -34,7 +32,7 @@ public class ComparisonController : ControllerBase
         catch (Supabase.Postgrest.Exceptions.PostgrestException ex)
         {
             if (ex.Message.Contains("foreign key constraint"))
-                return BadRequest(new { success = false, message = "Пользователь или товар не существует." });
+                return BadRequest(new { success = false, message = "The user or product does not exist." });
             if (ex.Message.Contains("duplicate key"))
                 return Conflict(new { success = false, message = "The product is already in comparison." });
 

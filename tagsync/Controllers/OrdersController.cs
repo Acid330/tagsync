@@ -35,6 +35,7 @@ public class OrdersController : ControllerBase
 
                     return new
                     {
+                        order_time = first.CreatedAt,
                         product_id = order.product_id,
                         product_title = product?.Title,
                         Slug = product.Category.ToLower(),
