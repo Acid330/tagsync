@@ -197,7 +197,7 @@ public class RecommendationController : ControllerBase
                 product_id = other.Id,
                 Title = other.Title,
                 Category = other.Category,
-                Slug = product.Category.ToLower(),
+                Slug = other.Category.ToLower(),
                 rating = averageRating,
                 images = productImages.Models
                     .Where(img => img.product_id == other.Id)
@@ -407,7 +407,7 @@ public class RecommendationController : ControllerBase
                     product_id = p.Id,
                     Title = p.Title,
                     Category = p.Category,
-                    Slug = product.Category.ToLower(),
+                    Slug = p.Category.ToLower(),
                     rating = averageRating,
                     images = productImages.Models
                         .Where(img => img.product_id == p.Id)

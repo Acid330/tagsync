@@ -77,7 +77,7 @@ public class MainPageRecommendationsController : ControllerBase
                 product_id = g.Key,
                 avg_rating = g.Average(r => r.rating)
             })
-            .Where(r => r.avg_rating >= 4)
+            .Where(r => r.avg_rating >= 0)
             .OrderByDescending(r => r.avg_rating)
             .Take(limit)
             .ToList();
